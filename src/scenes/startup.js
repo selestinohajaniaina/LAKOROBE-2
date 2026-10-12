@@ -208,11 +208,15 @@ export default class Startup extends Phaser.Scene {
     this.feuille.setOrigin(0, 1).setScale(feuilleScale);
   }
 
-  layoutButtons({ width, height}) {
+  layoutButtons({ width, height }) {
+    console.log("buttons", this.buttons);
+    
     this.buttons?.map((e, i) => {
       const { x, y, w } = this.getButtonPosition(BUTTON_COUNT, i);
-      e.setPosition(x, y).setW(w);
-    })
+      e.setPosition(x, y);
+      e.setSize(w, BUTTON_HEIGHT).setInteractive({ useHandCursor: true });
+      this.drawButton(e);
+    });
   }
 
   showAnimations(
@@ -326,14 +330,14 @@ export default class Startup extends Phaser.Scene {
 
     let x = W / 2;
     let y = H / 2 + BUTTON_HEIGHT * 2;
-    y = y + (gap * position) + (position * BUTTON_HEIGHT);
+    y = y + gap * position + position * BUTTON_HEIGHT;
 
     if (nomberOfButton > 4) {
       x /= 2;
     }
 
     let w = Math.min(320, W / 2);
-
+    w = Math.max(160, w);
     return { x, y, w };
   }
 }
