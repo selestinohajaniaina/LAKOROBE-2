@@ -4,13 +4,18 @@ import fontUrl from "../assets/fonts/SuperPixel.ttf";
 import personIdleUrl from "../assets/sprite/person-1/Idle.png";
 import personJumpUrl from "../assets/sprite/person-1/Jump.png";
 import personRunUrl from "../assets/sprite/person-1/Run.png";
+import createCourseTextures from "./runner/createCourseTextures";
+import RunnerCourse from "./runner/RunnerCourse";
 
 const FRAME_SIZE = 512;
 const PLAYER_SCALE = 0.18;
 const JUMP_SPEED = 610;
-const BASE_SPEED = 310;
+// const BASE_SPEED = 310;
+const BASE_SPEED = 150;
 const MAX_SPEED = 560;
 const PLAYER_X_RATIO = 0.23;
+const GRASS_SCALE = 0.625;
+const GRASS_HEIGHT = 50;
 const STATE = { READY: "ready", RUNNING: "running", OVER: "game-over" };
 const SHEETS = {
   idle: personIdleUrl,
@@ -35,20 +40,28 @@ export default class MovementScene extends Phaser.Scene {
   }
 
   create() {
+    this.rng = new Phaser.Math.RandomDataGenerator();
     this.createRunnerTextures();
     this.createEnvironment();
     this.createPlayerAnimations();
     this.createPlayer();
-    this.createObstacles();
+    this.course = new RunnerCourse(this);
     this.createInterface();
     this.createControls();
 
     this.physics.add.collider(this.player, this.ground);
     this.physics.add.overlap(
       this.player,
-      this.obstacles,
+      this.course.hazards,
       this.handleObstacleCollision,
       undefined,
+      this
+    );
+    this.physics.add.collider(
+      this.player,
+      this.course.platforms,
+      undefined,
+      this.canLandOnPlatform,
       this
     );
 
@@ -64,51 +77,7 @@ export default class MovementScene extends Phaser.Scene {
   }
 
   createRunnerTextures() {
-    if (this.textures.exists("runner-ground")) return;
-    const graphics = this.make.graphics({ add: false });
-
-    graphics.fillStyle(0x9f4728).fillRect(0, 0, 256, 96);
-    graphics.fillStyle(0xc96535).fillRect(0, 0, 256, 12);
-    graphics.fillStyle(0x7d351f);
-    graphics.fillRect(18, 31, 18, 5).fillRect(116, 66, 25, 5);
-    graphics.fillRect(211, 39, 12, 4).fillRect(65, 83, 9, 4);
-    graphics.fillStyle(0xe18a4f);
-    graphics.fillRect(54, 24, 8, 4).fillRect(170, 48, 13, 4);
-    graphics.generateTexture("runner-ground", 256, 96);
-    graphics.clear();
-
-    graphics.fillStyle(0x416f36);
-    graphics.fillTriangle(0, 170, 110, 55, 230, 170);
-    graphics.fillTriangle(155, 170, 330, 25, 510, 170);
-    graphics.fillTriangle(405, 170, 560, 70, 640, 170);
-    graphics.fillStyle(0x5e8d42);
-    graphics.fillCircle(65, 144, 44).fillCircle(137, 139, 55);
-    graphics.fillCircle(425, 142, 52).fillCircle(530, 145, 43);
-    graphics.generateTexture("runner-distant-plants", 640, 170);
-    graphics.clear();
-
-    graphics.fillStyle(0x355c2b);
-    for (let x = 0; x < 512; x += 64) {
-      graphics.fillTriangle(x, 80, x + 18, 20, x + 29, 80);
-      graphics.fillTriangle(x + 20, 80, x + 43, 38, x + 54, 80);
-    }
-    graphics.fillStyle(0x6b913d).fillRect(0, 72, 512, 8);
-    graphics.generateTexture("runner-foreground-grass", 512, 80);
-    graphics.clear();
-
-    graphics.fillStyle(0x54291d).fillRoundedRect(5, 12, 62, 24, 8);
-    graphics.fillStyle(0x7e4028).fillRoundedRect(9, 7, 54, 22, 7);
-    graphics.fillStyle(0xb76537).fillRect(15, 11, 32, 5);
-    graphics.fillStyle(0x3f211b).fillCircle(59, 20, 8);
-    graphics.generateTexture("runner-log", 72, 38);
-    graphics.clear();
-
-    graphics.fillStyle(0x543e35).fillTriangle(2, 34, 20, 8, 34, 34);
-    graphics.fillTriangle(19, 34, 36, 3, 52, 34);
-    graphics.fillStyle(0x78645a).fillTriangle(8, 30, 21, 11, 28, 30);
-    graphics.fillStyle(0xa08a73).fillTriangle(27, 27, 36, 8, 43, 27);
-    graphics.generateTexture("runner-rock", 54, 36);
-    graphics.destroy();
+    createCourseTextures(this);
   }
 
   createEnvironment() {
@@ -120,14 +89,17 @@ export default class MovementScene extends Phaser.Scene {
       .tileSprite(0, 0, 10, 10, "runner-background")
       .setOrigin(0).setAlpha(0.68).setDepth(-9);
     this.distantPlants = this.add
-      .tileSprite(0, 0, 10, 170, "runner-distant-plants")
+      .tileSprite(0, 0, 10, 170, "course-distant-plants")
       .setOrigin(0).setDepth(-5);
     this.groundVisual = this.add
-      .tileSprite(0, 0, 10, 96, "runner-ground")
+      .tileSprite(0, 0, 10, 96, "course-ground")
       .setOrigin(0).setDepth(1);
     this.foregroundGrass = this.add
-      .tileSprite(0, 0, 10, 80, "runner-foreground-grass")
-      .setOrigin(0).setDepth(8).setAlpha(0.8);
+      .tileSprite(0, 0, 10, GRASS_HEIGHT, "course-grass")
+      .setOrigin(0)
+      .setTileScale(GRASS_SCALE)
+      .setDepth(3)
+      .setAlpha(0.8);
 
     this.ground = this.add.rectangle(0, 0, 10, 32, 0x000000, 0);
     this.ground.setOrigin(0.5, 0);
@@ -157,18 +129,6 @@ export default class MovementScene extends Phaser.Scene {
     this.player.setScale(PLAYER_SCALE).setDepth(6).setCollideWorldBounds(true);
     this.player.body.setSize(210, 425).setOffset(151, 70);
     this.currentPlayerAnimation = null;
-  }
-
-  createObstacles() {
-    this.obstacles = this.physics.add.group({
-      allowGravity: false,
-      immovable: true,
-      maxSize: 10,
-    });
-    for (let index = 0; index < 10; index += 1) {
-      const obstacle = this.obstacles.create(-200, -200, "runner-rock");
-      obstacle.setOrigin(0.5, 1).setDepth(5).disableBody(true, true);
-    }
   }
 
   createControls() {
@@ -213,10 +173,13 @@ export default class MovementScene extends Phaser.Scene {
     );
     this.distantPlants.setPosition(0, this.groundY - 168).setSize(width, 170);
     this.groundVisual.setPosition(0, this.groundY).setSize(width, height - this.groundY);
-    this.foregroundGrass.setPosition(0, this.groundY - 67).setSize(width, 80);
+    this.foregroundGrass
+      .setPosition(0, this.groundY - GRASS_HEIGHT + 4)
+      .setSize(width, GRASS_HEIGHT);
     this.ground.setPosition(width / 2, this.groundY).setSize(width, 32);
     this.ground.body.setSize(width, 32);
     this.ground.body.updateFromGameObject();
+    this.course.relayout(this.groundY);
 
     this.playerX = Phaser.Math.Clamp(width * PLAYER_X_RATIO, 100, 300);
     this.player.setX(this.playerX);
@@ -227,13 +190,10 @@ export default class MovementScene extends Phaser.Scene {
   }
 
   resetGame(startImmediately) {
-    this.obstacles.getChildren().forEach((obstacle) => {
-      obstacle.disableBody(true, true);
-    });
     this.distance = 0;
     this.runTime = 0;
     this.scrollSpeed = BASE_SPEED;
-    this.spawnCountdown = 1500;
+    this.course.reset(this.groundY, this.scale.width);
     this.player.setVelocity(0, 0).setAcceleration(0, 0).setFlipX(false);
     this.placePlayerOnGround();
     this.scoreText.setText("SCORE 00000");
@@ -249,7 +209,6 @@ export default class MovementScene extends Phaser.Scene {
 
   startGame() {
     this.state = STATE.RUNNING;
-    this.spawnCountdown = 1500;
     this.messageText.setVisible(false);
     this.playPlayerAnimation("person-1-run");
   }
@@ -272,33 +231,23 @@ export default class MovementScene extends Phaser.Scene {
     );
   }
 
+  canLandOnPlatform(player, platform) {
+    if (player.body.velocity.y < 0) return false;
+    const previousBottom = player.body.prev
+      ? player.body.prev.y + player.body.height
+      : player.body.bottom;
+    return previousBottom <= platform.body.top + 14;
+  }
+
   placePlayerOnGround() {
     const bodyBottom = (70 + 425 - FRAME_SIZE / 2) * PLAYER_SCALE;
     this.player.setPosition(this.playerX, this.groundY - bodyBottom);
   }
 
-  spawnObstacle() {
-    const obstacle = this.obstacles.getFirstDead(false);
-    if (!obstacle) return;
-    const isRock = Phaser.Math.Between(0, 1) === 0;
-    obstacle.setTexture(isRock ? "runner-rock" : "runner-log");
-    obstacle.enableBody(
-      true,
-      this.scale.width + Phaser.Math.Between(40, 110),
-      this.groundY,
-      true,
-      true
-    );
-    obstacle.setOrigin(0.5, 1).setVelocityX(-this.scrollSpeed);
-    obstacle.body.setAllowGravity(false).setImmovable(true);
-    obstacle.body.setSize(isRock ? 44 : 58, isRock ? 27 : 25);
-    obstacle.body.setOffset(isRock ? 5 : 7, isRock ? 8 : 11);
-  }
-
   handleObstacleCollision() {
     if (this.state !== STATE.RUNNING) return;
     this.state = STATE.OVER;
-    this.obstacles.getChildren().forEach((obstacle) => obstacle.setVelocityX(0));
+    this.course.stop();
     this.player.setVelocityX(0);
     this.playPlayerAnimation("person-1-idle");
     this.messageText
@@ -342,19 +291,7 @@ export default class MovementScene extends Phaser.Scene {
     this.groundVisual.tilePositionX += this.scrollSpeed * seconds;
     this.foregroundGrass.tilePositionX += this.scrollSpeed * seconds * 1.12;
 
-    this.spawnCountdown -= delta;
-    if (this.spawnCountdown <= 0) {
-      this.spawnObstacle();
-      this.spawnCountdown = Math.max(
-        1050,
-        Phaser.Math.Between(1350, 2050) * (BASE_SPEED / this.scrollSpeed)
-      );
-    }
-    this.obstacles.getChildren().forEach((obstacle) => {
-      if (!obstacle?.active) return;
-      obstacle.setVelocityX(-this.scrollSpeed);
-      if (obstacle.x < -100) obstacle.disableBody(true, true);
-    });
+    this.course.update(seconds, this.scrollSpeed, this.scale.width);
 
     this.scoreText.setText(`SCORE ${this.formatScore()}`);
     if (!this.isPlayerGrounded()) {
