@@ -101,9 +101,13 @@ export default class Startup extends Phaser.Scene {
     });
 
     this.startupSong.play();
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.startupSong.stop();
+      this.startupSong.destroy();
+    });
 
     this.buttons = [];
-    this.createButton(["Play", "hello"], 0);
+    this.createButton(["Play", "Movement"], 0);
     this.createButton(["Mission", "hello"], 1);
     this.createButton(["Level", "hello"], 2);
     this.createButton(["Setting", "hello"], 3);
@@ -263,13 +267,14 @@ export default class Startup extends Phaser.Scene {
     button.setSize(w, BUTTON_HEIGHT).setInteractive({ useHandCursor: true });
     button.state = "normal";
     button.message = message;
-    button.on("pointerover", () => this.setButtonState(button, "pressed"));
+    button.on("pointerover", () => this.setButtonState(button, "hover"));
     button.on("pointerout", () => this.setButtonState(button, "normal"));
-    // button.on("pointerdown", () => this.setButtonState(button, "pressed"));
-    // button.on("pointerup", (pointer) => {
-    //   if (button.getBounds().contains(pointer.x, pointer.y))
-    //     this.activateButton(index);
-    // });
+    button.on("pointerdown", () => this.setButtonState(button, "pressed"));
+    button.on("pointerup", (pointer) => {
+      if (!button.getBounds().contains(pointer.x, pointer.y)) return;
+      this.setButtonState(button, "hover");
+      if (button.message === "Movement") this.scene.start(button.message);
+    });
     this.drawButton(button);
     this.buttons.push(button);
   }
