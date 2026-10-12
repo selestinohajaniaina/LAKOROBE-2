@@ -1,6 +1,15 @@
 import Phaser from "phaser";
 
 const assetUrl = (path) => new URL(path, import.meta.url).href;
+const BUTTON_HEIGHT = 50;
+const BUTTON_COUNT = 4;
+const COLORS = {
+  normal: 0x6f321b,
+  hover: 0x934821,
+  pressed: 0x4c2116,
+  selected: 0x3f7d32,
+  border: 0xf2bd55,
+};
 
 export default class Startup extends Phaser.Scene {
   constructor() {
@@ -45,6 +54,13 @@ export default class Startup extends Phaser.Scene {
     );
 
     this.load.audio("startup", assetUrl("../assets/song/startup1.mp3"));
+
+    // font
+    this.load.font(
+      "SuperPixel",
+      assetUrl("../assets/fonts/SuperPixel.ttf"),
+      "truetype"
+    );
   }
 
   create() {
@@ -85,6 +101,12 @@ export default class Startup extends Phaser.Scene {
     });
 
     this.startupSong.play();
+
+    this.buttons = [];
+    this.createButton(["Play", "hello"], 0);
+    this.createButton(["Mission", "hello"], 1);
+    this.createButton(["Level", "hello"], 2);
+    this.createButton(["Setting", "hello"], 3);
   }
 
   setResize() {
@@ -116,6 +138,10 @@ export default class Startup extends Phaser.Scene {
       height: this.scale.height,
     });
     this.layoutFeuille({
+      width: this.scale.width,
+      height: this.scale.height,
+    });
+    this.layoutButtons({
       width: this.scale.width,
       height: this.scale.height,
     });
@@ -182,6 +208,13 @@ export default class Startup extends Phaser.Scene {
     this.feuille.setOrigin(0, 1).setScale(feuilleScale);
   }
 
+  layoutButtons({ width, height}) {
+    this.buttons?.map((e, i) => {
+      const { x, y, w } = this.getButtonPosition(BUTTON_COUNT, i);
+      e.setPosition(x, y).setW(w);
+    })
+  }
+
   showAnimations(
     key,
     name,
@@ -207,5 +240,100 @@ export default class Startup extends Phaser.Scene {
     anim.setOrigin(0, 1);
     anim.play(key);
     return anim;
+  }
+
+  createButton([labelText, message], index) {
+    const { x, y, w } = this.getButtonPosition(BUTTON_COUNT, index);
+    const button = this.add.container(x, y).setDepth(10).setAlpha(1);
+    button.background = this.add.graphics();
+    button.label = this.add
+      .text(0, -3, labelText, {
+        fontFamily: "SuperPixel, Arial, sans-serif",
+        fontSize: "24px",
+        color: "#fff0b5",
+        stroke: "#35160e",
+        strokeThickness: 5,
+      })
+      .setOrigin(0.5);
+    button.add([button.background, button.label]);
+    button.setSize(w, BUTTON_HEIGHT).setInteractive({ useHandCursor: true });
+    button.state = "normal";
+    button.message = message;
+    button.on("pointerover", () => this.setButtonState(button, "pressed"));
+    button.on("pointerout", () => this.setButtonState(button, "normal"));
+    // button.on("pointerdown", () => this.setButtonState(button, "pressed"));
+    // button.on("pointerup", (pointer) => {
+    //   if (button.getBounds().contains(pointer.x, pointer.y))
+    //     this.activateButton(index);
+    // });
+    this.drawButton(button);
+    this.buttons.push(button);
+  }
+
+  drawButton(button) {
+    const width = button.width;
+    const height = button.height;
+    button.background.clear();
+    button.background.fillStyle(0x091d12, 0.4);
+    button.background.fillRoundedRect(
+      -width / 2 + 4,
+      -height / 2 + 6,
+      width - 8,
+      height - 2,
+      15
+    );
+    button.background.fillStyle(COLORS[button.state], 0.98);
+    button.background.fillRoundedRect(
+      -width / 2,
+      -height / 2,
+      width,
+      height - 6,
+      15
+    );
+    button.background.lineStyle(
+      button.state === "selected" ? 4 : 3,
+      COLORS.border,
+      1
+    );
+    button.background.strokeRoundedRect(
+      -width / 2,
+      -height / 2,
+      width,
+      height - 6,
+      15
+    );
+    button.background.lineStyle(2, 0xffd77b, 0.4);
+    button.background.lineBetween(
+      -width / 2 + 22,
+      -height / 2 + 9,
+      width / 2 - 22,
+      -height / 2 + 9
+    );
+  }
+
+  setButtonState(button, state) {
+    button.state = state;
+    this.drawButton(button);
+    this.tweens.killTweensOf(button);
+    const scale = state === "pressed" ? 0.96 : state === "hover" ? 1.035 : 1;
+    this.tweens.add({ targets: button, scale, duration: 90, ease: "Quad.Out" });
+  }
+
+  getButtonPosition(nomberOfButton, position) {
+    const W = this.scale.width;
+    const H = this.scale.height;
+    const gap = 10;
+
+    let x = W / 2;
+    let y = H / 2 + BUTTON_HEIGHT * 2;
+    y = y + (gap * position) + (position * BUTTON_HEIGHT);
+
+    if (nomberOfButton > 4) {
+      x /= 2;
+    }
+
+    let w = Math.min(320, W / 2);
+
+    return { x, y, w };
   }
 }
