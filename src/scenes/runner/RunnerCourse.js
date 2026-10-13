@@ -1,12 +1,15 @@
+const HAZARD_X_OFFSET = 55;
+
 const SEQUENCES = [
   {
     name: "chemin-du-village",
     length: 900,
     elements: [
       { role: "decor", texture: "course-house", x: 260 },
+      { role: "decor", texture: "course-fence", x: 390 },
       { role: "hazard", texture: "course-rock", x: 520 },
       { role: "decor", texture: "course-bush", x: 650 },
-      { role: "hazard", texture: "course-fence", x: 790 },
+      { role: "decor", texture: "course-fence", x: 790 },
     ],
   },
   {
@@ -14,43 +17,62 @@ const SEQUENCES = [
     length: 980,
     elements: [
       { role: "decor", texture: "course-house", x: 220 },
-      { role: "platform", texture: "course-roof", x: 220, height: 96 },
       { role: "decor", texture: "course-house", x: 545 },
-      { role: "platform", texture: "course-roof", x: 545, height: 108 },
       { role: "hazard", texture: "course-bush", x: 820 },
     ],
   },
   {
     name: "arbres-et-branches",
-    length: 980,
+    length: 1100,
     elements: [
-      { role: "decor", texture: "course-tree", x: 220 },
-      { role: "platform", texture: "course-branch", x: 225, height: 94 },
-      { role: "decor", texture: "course-tree", x: 555 },
-      { role: "platform", texture: "course-branch", x: 555, height: 108 },
-      { role: "hazard", texture: "course-rock", x: 825 },
+      { role: "decor", texture: "course-tree", x: 180 },
+      { role: "platform", texture: "course-branch", x: 185, height: 90 },
+      { role: "decor", texture: "course-tree", x: 440 },
+      { role: "platform", texture: "course-branch", x: 445, height: 108 },
+      { role: "decor", texture: "course-tree", x: 700 },
+      { role: "platform", texture: "course-branch", x: 705, height: 120 },
+      { role: "hazard", texture: "course-rock", x: 960 },
     ],
   },
   {
     name: "ferme",
-    length: 1080,
+    length: 1180,
     elements: [
       { role: "decor", texture: "course-house", x: 170, tint: 0xe8c794 },
-      { role: "hazard", texture: "course-zebu", x: 410 },
-      { role: "decor", texture: "course-trough", x: 585 },
-      { role: "hazard", texture: "course-chicken", x: 735, dynamic: true },
-      { role: "hazard", texture: "course-hay", x: 960 },
+      { role: "decor", texture: "course-fence", x: 300 },
+      { role: "hazard", texture: "course-zebu", x: 430 },
+      { role: "decor", texture: "course-trough", x: 620 },
+      { role: "hazard", texture: "course-chicken", x: 960, dynamic: true },
+      { role: "decor", texture: "course-fence", x: 900 },
+      { role: "hazard", texture: "course-hay", x: 1520 },
     ],
   },
   {
     name: "branche-vers-toit",
-    length: 980,
+    length: 1120,
     elements: [
-      { role: "decor", texture: "course-tree", x: 190 },
-      { role: "platform", texture: "course-branch", x: 195, height: 90 },
-      { role: "decor", texture: "course-house", x: 535 },
-      { role: "platform", texture: "course-roof", x: 535, height: 102 },
-      { role: "hazard", texture: "course-fence", x: 820 },
+      { role: "decor", texture: "course-tree", x: 170 },
+      { role: "platform", texture: "course-branch", x: 175, height: 92 },
+      { role: "decor", texture: "course-tree", x: 430 },
+      { role: "platform", texture: "course-branch", x: 435, height: 112 },
+      { role: "decor", texture: "course-house", x: 700 },
+      { role: "decor", texture: "course-fence", x: 835 },
+      { role: "hazard", texture: "course-bush", x: 980 },
+    ],
+  },
+  {
+    name: "branches-hautes",
+    length: 1180,
+    elements: [
+      { role: "decor", texture: "course-tree", x: 165 },
+      { role: "platform", texture: "course-branch", x: 170, height: 96 },
+      { role: "decor", texture: "course-tree", x: 400 },
+      { role: "platform", texture: "course-branch", x: 405, height: 116 },
+      { role: "decor", texture: "course-tree", x: 635 },
+      { role: "platform", texture: "course-branch", x: 640, height: 106 },
+      { role: "decor", texture: "course-tree", x: 870 },
+      { role: "platform", texture: "course-branch", x: 875, height: 122 },
+      { role: "hazard", texture: "course-rock", x: 1060 },
     ],
   },
 ];
@@ -58,7 +80,6 @@ const SEQUENCES = [
 const HITBOXES = {
   "course-rock": [44, 27, 5, 8],
   "course-bush": [52, 34, 6, 13],
-  "course-fence": [58, 50, 7, 8],
   "course-zebu": [86, 52, 10, 14],
   "course-chicken": [31, 31, 6, 7],
   "course-hay": [62, 42, 5, 8],
@@ -133,7 +154,13 @@ export default class RunnerCourse {
     const hazard = this.hazards.getFirstDead(false);
     if (!hazard) return;
     hazard.setTexture(definition.texture).setOrigin(0.5, 1);
-    hazard.enableBody(true, startX + definition.x, this.groundY, true, true);
+    hazard.enableBody(
+      true,
+      startX + definition.x + HAZARD_X_OFFSET,
+      this.groundY,
+      true,
+      true
+    );
     hazard.body.setAllowGravity(false).setImmovable(true);
     const [width, height, offsetX, offsetY] = HITBOXES[definition.texture];
     hazard.body.setSize(width, height).setOffset(offsetX, offsetY);
