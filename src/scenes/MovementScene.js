@@ -7,6 +7,23 @@ import personRunUrl from "../assets/sprite/person-1/Run.png";
 import createCourseTextures from "./runner/createCourseTextures";
 import RunnerCourse from "./runner/RunnerCourse";
 
+const BUTTON_HEIGHT = 50;
+const BUTTON_COUNT = 4;
+const SUPER_PIXEL_FAMILY = "SuperPixel";
+const isSuperPixelLoaded = () =>
+  Array.from(document.fonts).some(
+    (font) =>
+      font.family.replace(/["']/g, "") === SUPER_PIXEL_FAMILY &&
+      font.status === "loaded"
+  );
+const COLORS = {
+  normal: 0x6f321b,
+  hover: 0x934821,
+  pressed: 0x4c2116,
+  selected: 0x3f7d32,
+  border: 0xf2bd55,
+};
+
 const FRAME_SIZE = 512;
 const PLAYER_SCALE = 0.18;
 const JUMP_SPEED = 610;
@@ -30,7 +47,9 @@ export default class MovementScene extends Phaser.Scene {
 
   preload() {
     this.load.image("runner-background", backgroundUrl);
-    this.load.font("SuperPixel", fontUrl, "truetype");
+    if (!isSuperPixelLoaded()) {
+      this.load.font(SUPER_PIXEL_FAMILY, fontUrl, "truetype");
+    }
     Object.entries(SHEETS).forEach(([name, url]) => {
       this.load.spritesheet(`person-1-${name}`, url, {
         frameWidth: FRAME_SIZE,
@@ -87,13 +106,17 @@ export default class MovementScene extends Phaser.Scene {
       .setDepth(-10);
     this.background = this.add
       .tileSprite(0, 0, 10, 10, "runner-background")
-      .setOrigin(0).setAlpha(0.68).setDepth(-9);
+      .setOrigin(0)
+      .setAlpha(0.68)
+      .setDepth(-9);
     this.distantPlants = this.add
       .tileSprite(0, 0, 10, 170, "course-distant-plants")
-      .setOrigin(0).setDepth(-5);
+      .setOrigin(0)
+      .setDepth(-5);
     this.groundVisual = this.add
       .tileSprite(0, 0, 10, 96, "course-ground")
-      .setOrigin(0).setDepth(1);
+      .setOrigin(0)
+      .setDepth(1);
     this.foregroundGrass = this.add
       .tileSprite(0, 0, 10, GRASS_HEIGHT, "course-grass")
       .setOrigin(0)
@@ -157,10 +180,15 @@ export default class MovementScene extends Phaser.Scene {
         align: "center",
         lineSpacing: 12,
       })
-      .setOrigin(0.5).setDepth(20);
-    this.backText = this.add
-      .text(20, 51, "ÉCHAP : MENU", { ...style, fontSize: "12px" })
+      .setOrigin(0.5)
       .setDepth(20);
+    // this.backText = this.add
+    //   .text(20, 51, "ÉCHAP : MENU", { ...style, fontSize: "12px" })
+    //   .setDepth(20);
+
+    this.buttons = [];
+    this.createButton(["Play", "PLAY"], 0);
+    this.createButton(["Home", "Startup"], 1);
   }
 
   layout({ width, height }) {
@@ -172,7 +200,9 @@ export default class MovementScene extends Phaser.Scene {
       Math.max(width / this.background.texture.getSourceImage().width, 0.7)
     );
     this.distantPlants.setPosition(0, this.groundY - 168).setSize(width, 170);
-    this.groundVisual.setPosition(0, this.groundY).setSize(width, height - this.groundY);
+    this.groundVisual
+      .setPosition(0, this.groundY)
+      .setSize(width, height - this.groundY);
     this.foregroundGrass
       .setPosition(0, this.groundY - GRASS_HEIGHT + 4)
       .setSize(width, GRASS_HEIGHT);
@@ -187,6 +217,10 @@ export default class MovementScene extends Phaser.Scene {
       this.placePlayerOnGround();
     }
     this.messageText.setPosition(width / 2, Math.max(110, height * 0.32));
+
+    this.layoutButtons({ width, height });
+    this.layoutTexts({ width, height });
+
   }
 
   resetGame(startImmediately) {
@@ -203,7 +237,13 @@ export default class MovementScene extends Phaser.Scene {
     } else {
       this.state = STATE.READY;
       this.playPlayerAnimation("person-1-idle");
-      this.messageText.setText("APPUIE SUR ESPACE\nPOUR COMMENCER").setVisible(true);
+      this.messageText
+        .setText(
+          "APPUIE SUR PLAY POUR COMMENCER\nPOUR SAUTER\nÉCRAN / ESPACE / ↑"
+        )
+        .setVisible(true);
+      // Show all buttons of playing the game
+      this.toggleHideButtons(true);
     }
   }
 
@@ -211,12 +251,14 @@ export default class MovementScene extends Phaser.Scene {
     this.state = STATE.RUNNING;
     this.messageText.setVisible(false);
     this.playPlayerAnimation("person-1-run");
+    // Hide all buttons of playing the game
+    this.toggleHideButtons(false);
   }
 
   handleAction() {
-    if (this.state === STATE.READY) this.startGame();
-    else if (this.state === STATE.RUNNING) this.jump();
-    else if (this.state === STATE.OVER) this.resetGame(true);
+    // if (this.state === STATE.READY) this.startGame();
+    if (this.state === STATE.RUNNING) this.jump();
+    // else if (this.state === STATE.OVER) this.resetGame(true);
   }
 
   jump() {
@@ -251,8 +293,10 @@ export default class MovementScene extends Phaser.Scene {
     this.player.setVelocityX(0);
     this.playPlayerAnimation("person-1-idle");
     this.messageText
-      .setText(`GAME OVER\nSCORE ${this.formatScore()}\nR OU TOUCHER POUR REJOUER`)
+      .setText(`GAME OVER\nSCORE FINAL ${this.formatScore()}`)
       .setVisible(true);
+    // Hide all buttons of playing the game
+    this.toggleHideButtons(true, "Replay");
   }
 
   playPlayerAnimation(key) {
@@ -266,10 +310,6 @@ export default class MovementScene extends Phaser.Scene {
   }
 
   update(_time, delta) {
-    if (Phaser.Input.Keyboard.JustDown(this.keys.back)) {
-      this.scene.start("Startup");
-      return;
-    }
     if (Phaser.Input.Keyboard.JustDown(this.keys.restart)) {
       if (this.state === STATE.OVER) this.resetGame(true);
       return;
@@ -302,4 +342,127 @@ export default class MovementScene extends Phaser.Scene {
       this.playPlayerAnimation("person-1-run");
     }
   }
+
+  createButton([labelText, message], index) {
+    const { x, y, w } = this.getButtonPosition(BUTTON_COUNT, index);
+    const button = this.add.container(x, y).setDepth(10).setAlpha(1);
+    button.background = this.add.graphics();
+    button.label = this.add
+      .text(0, -3, labelText, {
+        fontFamily: "SuperPixel, Arial, sans-serif",
+        fontSize: "24px",
+        color: "#fff0b5",
+        stroke: "#35160e",
+        strokeThickness: 5,
+      })
+      .setOrigin(0.5);
+    button.add([button.background, button.label]);
+    button.setSize(w, BUTTON_HEIGHT).setInteractive({ useHandCursor: true });
+    button.state = "normal";
+    button.message = message;
+    button.on("pointerover", () => this.setButtonState(button, "hover"));
+    button.on("pointerout", () => this.setButtonState(button, "normal"));
+    button.on("pointerdown", () => this.setButtonState(button, "pressed"));
+    button.on("pointerup", (pointer) => {
+      if (!button.getBounds().contains(pointer.x, pointer.y)) return;
+      this.setButtonState(button, "hover");
+      if (button.message == "PLAY") {
+        if (this.state === STATE.READY) this.startGame();
+        else if (this.state === STATE.OVER) this.resetGame(true);
+      } else this.scene.start("Startup");
+    });
+    this.drawButton(button);
+    this.buttons.push(button);
+  }
+
+  drawButton(button) {
+    const width = button.width;
+    const height = button.height;
+    button.background.clear();
+    button.background.fillStyle(0x091d12, 0.4);
+    button.background.fillRoundedRect(
+      -width / 2 + 4,
+      -height / 2 + 6,
+      width - 8,
+      height - 2,
+      15
+    );
+    button.background.fillStyle(COLORS[button.state], 0.98);
+    button.background.fillRoundedRect(
+      -width / 2,
+      -height / 2,
+      width,
+      height - 6,
+      15
+    );
+    button.background.lineStyle(
+      button.state === "selected" ? 4 : 3,
+      COLORS.border,
+      1
+    );
+    button.background.strokeRoundedRect(
+      -width / 2,
+      -height / 2,
+      width,
+      height - 6,
+      15
+    );
+    button.background.lineStyle(2, 0xffd77b, 0.4);
+    button.background.lineBetween(
+      -width / 2 + 22,
+      -height / 2 + 9,
+      width / 2 - 22,
+      -height / 2 + 9
+    );
+  }
+
+  setButtonState(button, state) {
+    button.state = state;
+    this.drawButton(button);
+    this.tweens.killTweensOf(button);
+    const scale = state === "pressed" ? 0.96 : state === "hover" ? 1.035 : 1;
+    this.tweens.add({ targets: button, scale, duration: 90, ease: "Quad.Out" });
+  }
+
+  getButtonPosition(nomberOfButton, position) {
+    const W = this.scale.width;
+    const H = this.scale.height;
+    const gap = 10;
+
+    let x = W / 2;
+    let y = H / 2 + BUTTON_HEIGHT * 2;
+    y = y + gap * position + position * BUTTON_HEIGHT;
+
+    if (nomberOfButton > 4) {
+      x /= 2;
+    }
+
+    let w = Math.min(320, W / 2);
+    w = Math.max(160, w);
+    return { x, y, w };
+  }
+
+  toggleHideButtons(type, textToPlay = "Play") {
+    this.buttons.map((b) => {
+      b.setVisible(type);
+      if (b.label.text == "Play" || b.label.text == "Replay")
+        b.label.setText(textToPlay);
+    });
+  }
+
+  layoutButtons({ width, height }) {
+    this.buttons?.map((e, i) => {
+      const { x, y, w } = this.getButtonPosition(BUTTON_COUNT, i);
+      e.setPosition(x, y);
+      e.setSize(w, BUTTON_HEIGHT).setInteractive({ useHandCursor: true });
+      this.drawButton(e);
+    });
+  }
+
+  layoutTexts({ width, height }) {
+    let fontSize = Math.min(20, width / 25);
+    fontSize = Math.max(fontSize, 10);
+    this.messageText.setFontSize(`${fontSize}px`);
+  }
+
 }

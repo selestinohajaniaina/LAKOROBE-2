@@ -1,8 +1,21 @@
 import Phaser from "phaser";
+import backgroundUrl from "../assets/lakorobe/backgroundBamboo.png";
+import lakorobeUrl from "../assets/lakorobe/lakorobe.png";
+import litleBambooUrl from "../assets/lakorobe/litle-bamboo.png";
+import bararataUrl from "../assets/lakorobe/bararata.png";
+import feuilleUrl from "../assets/lakorobe/feuille.png";
+import fontUrl from "../assets/fonts/SuperPixel.ttf";
+import musicUrl from "../assets/song/startup1.mp3";
 
-const assetUrl = (path) => new URL(path, import.meta.url).href;
 const BUTTON_HEIGHT = 50;
 const BUTTON_COUNT = 4;
+const SUPER_PIXEL_FAMILY = "SuperPixel";
+const isSuperPixelLoaded = () =>
+  Array.from(document.fonts).some(
+    (font) =>
+      font.family.replace(/["']/g, "") === SUPER_PIXEL_FAMILY &&
+      font.status === "loaded"
+  );
 const COLORS = {
   normal: 0x6f321b,
   hover: 0x934821,
@@ -18,49 +31,31 @@ export default class Startup extends Phaser.Scene {
 
   preload() {
     // image
-    this.load.image(
-      "startup-background",
-      assetUrl("../assets/lakorobe/backgroundBamboo.png")
-    );
-    this.load.image(
-      "startup-logo",
-      assetUrl("../assets/lakorobe/lakorobe.png")
-    );
-    this.load.spritesheet(
-      "litle-bamboo",
-      assetUrl("../assets/lakorobe/litle-bamboo.png"),
-      {
-        frameWidth: 335,
-        frameHeight: 480,
-      }
-    );
+    this.load.image("startup-background", backgroundUrl);
+    this.load.image("startup-logo", lakorobeUrl);
+    this.load.spritesheet("litle-bamboo", litleBambooUrl, {
+      frameWidth: 335,
+      frameHeight: 480,
+    });
 
-    this.load.spritesheet(
-      "bararata",
-      assetUrl("../assets/lakorobe/bararata.png"),
-      {
-        frameWidth: 480,
-        frameHeight: 480,
-      }
-    );
+    this.load.spritesheet("bararata", bararataUrl, {
+      frameWidth: 480,
+      frameHeight: 480,
+    });
 
-    this.load.spritesheet(
-      "feuille",
-      assetUrl("../assets/lakorobe/feuille.png"),
-      {
-        frameWidth: 480,
-        frameHeight: 480,
-      }
-    );
+    this.load.spritesheet("feuille", feuilleUrl, {
+      frameWidth: 480,
+      frameHeight: 480,
+    });
 
-    this.load.audio("startup", assetUrl("../assets/song/startup1.mp3"));
+    this.load.audio("startup", musicUrl);
 
     // font
-    this.load.font(
-      "SuperPixel",
-      assetUrl("../assets/fonts/SuperPixel.ttf"),
-      "truetype"
-    );
+    // Phaser's FontFile isn't cached. Starting this scene again would create a
+    // second FontFace promise for the same global browser font.
+    if (!isSuperPixelLoaded()) {
+      this.load.font(SUPER_PIXEL_FAMILY, fontUrl, "truetype");
+    }
   }
 
   create() {
@@ -95,6 +90,9 @@ export default class Startup extends Phaser.Scene {
       5,
       7
     );
+    // Scene instances are reused. Clear containers destroyed by the previous
+    // shutdown before setResize() performs its immediate layout.
+    this.buttons = [];
     this.setResize();
     this.startupSong = this.sound.add("startup", {
       loop: true,
@@ -106,7 +104,6 @@ export default class Startup extends Phaser.Scene {
       this.startupSong.destroy();
     });
 
-    this.buttons = [];
     this.createButton(["Play", "Movement"], 0);
     this.createButton(["Mission", "hello"], 1);
     this.createButton(["Level", "hello"], 2);
@@ -213,8 +210,6 @@ export default class Startup extends Phaser.Scene {
   }
 
   layoutButtons({ width, height }) {
-    console.log("buttons", this.buttons);
-    
     this.buttons?.map((e, i) => {
       const { x, y, w } = this.getButtonPosition(BUTTON_COUNT, i);
       e.setPosition(x, y);
@@ -233,15 +228,17 @@ export default class Startup extends Phaser.Scene {
     frameRate = 12,
     scale = 0.5
   ) {
-    this.anims.create({
-      key: key,
-      frames: this.anims.generateFrameNumbers(name, {
-        start: start,
-        end: end,
-      }),
-      frameRate: frameRate,
-      repeat: -1,
-    });
+    if (!this.anims.exists(key)) {
+      this.anims.create({
+        key: key,
+        frames: this.anims.generateFrameNumbers(name, {
+          start: start,
+          end: end,
+        }),
+        frameRate: frameRate,
+        repeat: -1,
+      });
+    }
 
     const anim = this.add.sprite(x, y, name);
     anim.setScale(scale);
