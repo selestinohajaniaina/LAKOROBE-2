@@ -6,6 +6,7 @@ import bararataUrl from "../assets/lakorobe/bararata.png";
 import feuilleUrl from "../assets/lakorobe/feuille.png";
 import fontUrl from "../assets/fonts/SuperPixel.ttf";
 import musicUrl from "../assets/song/startup1.mp3";
+import clickUrl from "../assets/song/popup.mp3";
 
 const BUTTON_HEIGHT = 50;
 const BUTTON_COUNT = 4;
@@ -49,6 +50,7 @@ export default class Startup extends Phaser.Scene {
     });
 
     this.load.audio("startup", musicUrl);
+    this.load.audio("click", clickUrl);
 
     // font
     // Phaser's FontFile isn't cached. Starting this scene again would create a
@@ -102,6 +104,10 @@ export default class Startup extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.startupSong.stop();
       this.startupSong.destroy();
+    });
+
+    this.clickSong = this.sound.add("click", {
+      loop: false,
     });
 
     this.createButton(["Play", "Movement"], 0);
@@ -268,6 +274,7 @@ export default class Startup extends Phaser.Scene {
     button.on("pointerout", () => this.setButtonState(button, "normal"));
     button.on("pointerdown", () => this.setButtonState(button, "pressed"));
     button.on("pointerup", (pointer) => {
+      this.clickSong.play();
       if (!button.getBounds().contains(pointer.x, pointer.y)) return;
       this.setButtonState(button, "hover");
       if (button.message === "Movement") this.scene.start(button.message);

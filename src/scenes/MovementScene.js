@@ -4,6 +4,10 @@ import fontUrl from "../assets/fonts/SuperPixel.ttf";
 import personIdleUrl from "../assets/sprite/person-1/Idle.png";
 import personJumpUrl from "../assets/sprite/person-1/Jump.png";
 import personRunUrl from "../assets/sprite/person-1/Run.png";
+import clickUrl from "../assets/song/popup.mp3";
+import songUrl from "../assets/song/startup.mp3";
+import runSongUrl from "../assets/song/step-1.mp3";
+import obstacleSongUrl from "../assets/song/pick-up.mp3";
 import createCourseTextures from "./runner/createCourseTextures";
 import RunnerCourse from "./runner/RunnerCourse";
 
@@ -56,6 +60,10 @@ export default class MovementScene extends Phaser.Scene {
         frameHeight: FRAME_SIZE,
       });
     });
+    this.load.audio("click-move", clickUrl);
+    this.load.audio("song-move", songUrl);
+    this.load.audio("run-song-move", runSongUrl);
+    this.load.audio("obstacle-song-move", obstacleSongUrl);
   }
 
   create() {
@@ -93,6 +101,20 @@ export default class MovementScene extends Phaser.Scene {
 
     this.layout({ width: this.scale.width, height: this.scale.height });
     this.resetGame(false);
+
+    this.clickSong = this.sound.add("click-move", {
+      loop: false,
+    });
+    this.runSong = this.sound.add("run-song-move", {
+      loop: true,
+    });
+    this.obstacleSong = this.sound.add("obstacle-song-move", {
+      loop: false,
+    });
+    this.moveSong = this.sound.add("song-move", {
+      loop: true,
+    });
+    this.moveSong.play();
   }
 
   createRunnerTextures() {
@@ -220,7 +242,6 @@ export default class MovementScene extends Phaser.Scene {
 
     this.layoutButtons({ width, height });
     this.layoutTexts({ width, height });
-
   }
 
   resetGame(startImmediately) {
@@ -253,6 +274,9 @@ export default class MovementScene extends Phaser.Scene {
     this.playPlayerAnimation("person-1-run");
     // Hide all buttons of playing the game
     this.toggleHideButtons(false);
+    // Play songs
+    this.moveSong.stop();
+    this.runSong.play();
   }
 
   handleAction() {
@@ -297,6 +321,9 @@ export default class MovementScene extends Phaser.Scene {
       .setVisible(true);
     // Hide all buttons of playing the game
     this.toggleHideButtons(true, "Replay");
+    this.runSong.stop();
+    this.obstacleSong.play();
+    this.moveSong.play();
   }
 
   playPlayerAnimation(key) {
@@ -364,12 +391,16 @@ export default class MovementScene extends Phaser.Scene {
     button.on("pointerout", () => this.setButtonState(button, "normal"));
     button.on("pointerdown", () => this.setButtonState(button, "pressed"));
     button.on("pointerup", (pointer) => {
+      this.clickSong.play();
       if (!button.getBounds().contains(pointer.x, pointer.y)) return;
       this.setButtonState(button, "hover");
       if (button.message == "PLAY") {
         if (this.state === STATE.READY) this.startGame();
         else if (this.state === STATE.OVER) this.resetGame(true);
-      } else this.scene.start("Startup");
+      } else {
+        this.moveSong.stop();
+        this.scene.start("Startup");
+      }
     });
     this.drawButton(button);
     this.buttons.push(button);
@@ -464,5 +495,4 @@ export default class MovementScene extends Phaser.Scene {
     fontSize = Math.max(fontSize, 10);
     this.messageText.setFontSize(`${fontSize}px`);
   }
-
 }
