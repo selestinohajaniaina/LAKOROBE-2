@@ -10,6 +10,15 @@ export const LAB_LEVELS = [
     target: [4, 1],
   },
   {
+    name: "LEFT TURN",
+    hint: "Not every turn goes right. Try turnLeft().",
+    lines: 4,
+    map: ["#######", "#####.#", "#####.#", "#.....#", "#######"],
+    start: [1, 3],
+    direction: 1,
+    target: [5, 1],
+  },
+  {
     name: "TURN THE CORNER",
     hint: "A turn changes where forward goes.",
     lines: 4,
@@ -60,25 +69,7 @@ export const LAB_LEVELS = [
     direction: 1,
     target: [7, 5],
   },
-  {
-    name: "LEFT TURN",
-    hint: "Not every turn goes right. Try turnLeft().",
-    lines: 4,
-    map: ["#######", "#####.#", "#####.#", "#.....#", "#######"],
-    start: [1, 3],
-    direction: 1,
-    target: [5, 1],
-  },
-  {
-    name: "TURN AROUND",
-    hint: "Two turns in a row make a U-turn. Turns can repeat too.",
-    lines: 6,
-    map: ["#######", "#.....#", "#.#####", "#.....#", "#######"],
-    start: [5, 1],
-    direction: 1,
-    target: [5, 3],
-  },
-  {
+    {
     name: "SNAKE",
     hint: "You start facing down. Alternate left and right.",
     lines: 7,
@@ -94,6 +85,15 @@ export const LAB_LEVELS = [
     start: [1, 1],
     direction: 2,
     target: [5, 5],
+  },
+  {
+    name: "TURN AROUND",
+    hint: "Two turns in a row make a U-turn. Turns can repeat too.",
+    lines: 6,
+    map: ["#######", "#.....#", "#.#####", "#.....#", "#######"],
+    start: [5, 1],
+    direction: 1,
+    target: [5, 3],
   },
   {
     name: "SPIRAL",
