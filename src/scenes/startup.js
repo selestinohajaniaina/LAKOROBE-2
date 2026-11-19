@@ -9,7 +9,7 @@ import musicUrl from "../assets/song/startup1.mp3";
 import clickUrl from "../assets/song/popup.mp3";
 
 const BUTTON_HEIGHT = 50;
-const BUTTON_COUNT = 4;
+const BUTTON_COUNT = 5;
 const SUPER_PIXEL_FAMILY = "SuperPixel";
 const isSuperPixelLoaded = () =>
   Array.from(document.fonts).some(
@@ -110,10 +110,10 @@ export default class Startup extends Phaser.Scene {
       loop: false,
     });
 
-    this.createButton(["Play", "Movement"], 0);
-    this.createButton(["Mission", "hello"], 1);
-    this.createButton(["Level", "hello"], 2);
-    this.createButton(["Setting", "hello"], 3);
+    this.createButton(["JUMP", "Movement"], 0);
+    this.createButton(["ALGO", "ProgrammingLabScene"], 1);
+    this.createButton(["Mission", "hello"], 2);
+    this.createButton(["Level", "hello"], 3);
   }
 
   setResize() {
@@ -277,7 +277,7 @@ export default class Startup extends Phaser.Scene {
       this.clickSong.play();
       if (!button.getBounds().contains(pointer.x, pointer.y)) return;
       this.setButtonState(button, "hover");
-      if (button.message === "Movement") this.scene.start(button.message);
+      if (["Movement", "ProgrammingLabScene"].includes(button.message)) this.scene.start(button.message);
     });
     this.drawButton(button);
     this.buttons.push(button);
@@ -337,16 +337,13 @@ export default class Startup extends Phaser.Scene {
     const H = this.scale.height;
     const gap = 10;
 
-    let x = W / 2;
-    let y = H / 2 + BUTTON_HEIGHT * 2;
-    y = y + gap * position + position * BUTTON_HEIGHT;
-
-    if (nomberOfButton > 4) {
-      x /= 2;
-    }
-
-    let w = Math.min(320, W / 2);
-    w = Math.max(160, w);
+    const twoColumns = nomberOfButton > 4 && W > 620;
+    const column = twoColumns ? position % 2 : 0;
+    const row = twoColumns ? Math.floor(position / 2) : position;
+    let x = twoColumns ? W * (column ? .7 : .3) : W / 2;
+    let y = H / 2 + BUTTON_HEIGHT * 1.55 + row * (BUTTON_HEIGHT + gap);
+    let w = Math.min(twoColumns ? 280 : 320, twoColumns ? W * .38 : W / 2);
+    w = Math.max(150, w);
     return { x, y, w };
   }
 }
