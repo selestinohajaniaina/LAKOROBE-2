@@ -7,6 +7,7 @@ import feuilleUrl from "../assets/lakorobe/feuille.png";
 import fontUrl from "../assets/fonts/SuperPixel.ttf";
 import musicUrl from "../assets/song/startup1.mp3";
 import clickUrl from "../assets/song/popup.mp3";
+import { configureButtonInput } from "../ui/configureButtonInput.js";
 
 const BUTTON_HEIGHT = 50;
 const BUTTON_COUNT = 5;
@@ -219,7 +220,7 @@ export default class Startup extends Phaser.Scene {
     this.buttons?.map((e, i) => {
       const { x, y, w } = this.getButtonPosition(BUTTON_COUNT, i);
       e.setPosition(x, y);
-      e.setSize(w, BUTTON_HEIGHT).setInteractive({ useHandCursor: true });
+      configureButtonInput(e, w, BUTTON_HEIGHT);
       this.drawButton(e);
     });
   }
@@ -267,7 +268,7 @@ export default class Startup extends Phaser.Scene {
       })
       .setOrigin(0.5);
     button.add([button.background, button.label]);
-    button.setSize(w, BUTTON_HEIGHT).setInteractive({ useHandCursor: true });
+    configureButtonInput(button, w, BUTTON_HEIGHT);
     button.state = "normal";
     button.message = message;
     button.on("pointerover", () => this.setButtonState(button, "hover"));

@@ -10,6 +10,7 @@ import runSongUrl from "../assets/song/step-1.mp3";
 import obstacleSongUrl from "../assets/song/pick-up.mp3";
 import createCourseTextures from "./runner/createCourseTextures";
 import RunnerCourse from "./runner/RunnerCourse";
+import { configureButtonInput } from "../ui/configureButtonInput.js";
 
 const BUTTON_HEIGHT = 50;
 const BUTTON_COUNT = 4;
@@ -384,7 +385,7 @@ export default class MovementScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
     button.add([button.background, button.label]);
-    button.setSize(w, BUTTON_HEIGHT).setInteractive({ useHandCursor: true });
+    configureButtonInput(button, w, BUTTON_HEIGHT);
     button.state = "normal";
     button.message = message;
     button.on("pointerover", () => this.setButtonState(button, "hover"));
@@ -485,7 +486,7 @@ export default class MovementScene extends Phaser.Scene {
     this.buttons?.map((e, i) => {
       const { x, y, w } = this.getButtonPosition(BUTTON_COUNT, i);
       e.setPosition(x, y);
-      e.setSize(w, BUTTON_HEIGHT).setInteractive({ useHandCursor: true });
+      configureButtonInput(e, w, BUTTON_HEIGHT);
       this.drawButton(e);
     });
   }

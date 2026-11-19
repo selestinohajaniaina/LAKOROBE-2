@@ -5,6 +5,7 @@ import clickUrl from "../assets/song/popup.mp3";
 import { LAB_LEVELS, DIRECTIONS } from "../systems/programming-lab/levels.js";
 import CommandManager from "../systems/programming-lab/CommandManager.js";
 import ProgramExecutor from "../systems/programming-lab/ProgramExecutor.js";
+import { configureButtonInput } from "../ui/configureButtonInput.js";
 
 const FONT = "SuperPixel, monospace";
 const BUTTON_COLOURS = { normal: 0xe4b84f, hover: 0xffd872, down: 0xbe8731 };
@@ -139,10 +140,8 @@ export default class ProgrammingLabScene extends Phaser.Scene {
         align: "center",
       })
       .setOrigin(0.5);
-    button
-      .add([button.bg, button.label])
-      .setSize(100, 34)
-      .setInteractive({ useHandCursor: true });
+    button.add([button.bg, button.label]);
+    configureButtonInput(button, 100, 34);
     button.on("pointerover", () => this.paintButton(button, "hover"));
     button.on("pointerout", () => this.paintButton(button, "normal"));
     button.on("pointerdown", () => this.paintButton(button, "down"));
@@ -396,8 +395,8 @@ export default class ProgrammingLabScene extends Phaser.Scene {
         color: "#ffe16b",
         backgroundColor: "#44315f",
         padding: { x: 4, y: 2 },
-      })
-      .setInteractive({ useHandCursor: true });
+      });
+    configureButtonInput(t, t.width, t.height);
     t.on("pointerup", callback);
     return t;
   }
@@ -428,7 +427,7 @@ export default class ProgrammingLabScene extends Phaser.Scene {
       (width - side * 4) / 3
     );
     commandButtons.forEach((b, i) => {
-      b.setSize(commandW, 34).setPosition(
+      configureButtonInput(b, commandW, 34).setPosition(
         side + commandW / 2 + i * (commandW + side),
         baseY
       );
@@ -437,7 +436,7 @@ export default class ProgrammingLabScene extends Phaser.Scene {
     });
     const utilityW = Math.min(86, (width - side * 5) / 4);
     utilityButtons.forEach((b, i) => {
-      b.setSize(utilityW, 29).setPosition(
+      configureButtonInput(b, utilityW, 29).setPosition(
         side + utilityW / 2 + i * (utilityW + side),
         baseY + 43
       );
@@ -446,14 +445,13 @@ export default class ProgrammingLabScene extends Phaser.Scene {
     });
     const run = this.buttons.find((b) => b.kind === "run");
     const exit = this.buttons.find((b) => b.kind === "exit");
-    run
-      .setSize(Math.min(150, width * 0.27), 38)
+    configureButtonInput(run, Math.min(150, width * 0.27), 38)
       .setPosition(width - side - run.width / 2, baseY + 43);
     this.paintButton(run, "normal");
-    exit.setSize(62, 26).setPosition(width - side - 31, 22);
+    configureButtonInput(exit, 62, 26).setPosition(width - side - 31, 22);
     exit.label.setFontSize("8px");
     this.paintButton(exit, "normal");
-    this.nextButton.setSize(150, 38).setPosition(width / 2, height / 2);
+    configureButtonInput(this.nextButton, 150, 38).setPosition(width / 2, height / 2);
     this.paintButton(this.nextButton, "normal");
   }
 
