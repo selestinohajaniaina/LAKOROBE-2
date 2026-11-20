@@ -74,6 +74,7 @@ export default class MovementScene extends Phaser.Scene {
     this.createPlayerAnimations();
     this.createPlayer();
     this.course = new RunnerCourse(this);
+    this.createSounds();
     this.createInterface();
     this.createControls();
 
@@ -103,6 +104,10 @@ export default class MovementScene extends Phaser.Scene {
     this.layout({ width: this.scale.width, height: this.scale.height });
     this.resetGame(false);
 
+    this.moveSong.play();
+  }
+
+  createSounds() {
     this.clickSong = this.sound.add("click-move", {
       loop: false,
     });
@@ -115,7 +120,6 @@ export default class MovementScene extends Phaser.Scene {
     this.moveSong = this.sound.add("song-move", {
       loop: true,
     });
-    this.moveSong.play();
   }
 
   createRunnerTextures() {
@@ -245,11 +249,10 @@ export default class MovementScene extends Phaser.Scene {
   resetGame(startImmediately) {
     this.cameras.main.resetFX();
     this.changingTheme = false;
-    this.applyTheme(THEMES[0]);
-
     this.distance = 0;
     this.runTime = 0;
     this.scrollSpeed = BASE_SPEED;
+    this.applyTheme(THEMES[0]);
     this.course.reset(this.groundY, this.scale.width);
     this.player.setVelocity(0, 0).setAcceleration(0, 0).setFlipX(false);
     this.placePlayerOnGround();
@@ -530,6 +533,7 @@ export default class MovementScene extends Phaser.Scene {
     const cam = this.cameras.main;
     cam.once("camerafadeoutcomplete", () => {
       this.applyTheme(theme);
+      this.course.reset(this.groundY, this.scale.width); // nouveaux obstacles du thème
       this.themeText.setText(theme.name).setAlpha(1);
       this.tweens.add({
         targets: this.themeText,

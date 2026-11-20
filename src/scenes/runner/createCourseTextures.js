@@ -1,4 +1,5 @@
 import { THEMES } from "./themes";
+import createThemeTextures from "./createThemeTextures";
 
 const createTexture = (scene, key, width, height, draw) => {
   if (scene.textures.exists(key)) return;
@@ -126,4 +127,6 @@ export default function createCourseTextures(scene) {
     g.fillStyle(0x875334).fillRoundedRect(0, 7, 86, 25, 7);
     g.fillStyle(0x4d8b8a).fillRect(8, 9, 70, 6);
   });
+
+  createThemeTextures(scene);
 }

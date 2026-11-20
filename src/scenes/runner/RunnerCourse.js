@@ -1,97 +1,17 @@
+import { SEQUENCES_BY_THEME, HITBOXES } from "./courseSequences";
 const HAZARD_X_OFFSET = 55;
-
-const SEQUENCES = [
-  {
-    name: "chemin-du-village",
-    length: 900,
-    elements: [
-      { role: "decor", texture: "course-house", x: 260 },
-      { role: "decor", texture: "course-fence", x: 390 },
-      { role: "hazard", texture: "course-rock", x: 520 },
-      { role: "decor", texture: "course-bush", x: 650 },
-      { role: "decor", texture: "course-fence", x: 790 },
-    ],
-  },
-  {
-    name: "toits-doubles",
-    length: 980,
-    elements: [
-      { role: "decor", texture: "course-house", x: 220 },
-      { role: "decor", texture: "course-house", x: 545 },
-      { role: "hazard", texture: "course-bush", x: 820 },
-    ],
-  },
-  {
-    name: "arbres-et-branches",
-    length: 1100,
-    elements: [
-      { role: "decor", texture: "course-tree", x: 180 },
-      { role: "platform", texture: "course-branch", x: 185, height: 90 },
-      { role: "decor", texture: "course-tree", x: 440 },
-      { role: "platform", texture: "course-branch", x: 345, height: 90 },
-      { role: "decor", texture: "course-tree", x: 700 },
-      { role: "platform", texture: "course-branch", x: 705, height: 90 },
-      { role: "hazard", texture: "course-rock", x: 960 },
-    ],
-  },
-  {
-    name: "ferme",
-    length: 1180,
-    elements: [
-      { role: "decor", texture: "course-house", x: 170, tint: 0xe8c794 },
-      { role: "decor", texture: "course-fence", x: 300 },
-      { role: "hazard", texture: "course-zebu", x: 430 },
-      { role: "decor", texture: "course-trough", x: 620 },
-      { role: "hazard", texture: "course-chicken", x: 960, dynamic: false },
-      { role: "decor", texture: "course-fence", x: 900 },
-      { role: "hazard", texture: "course-hay", x: 1520 },
-    ],
-  },
-  {
-    name: "branche-vers-toit",
-    length: 1120,
-    elements: [
-      { role: "decor", texture: "course-tree", x: 170 },
-      { role: "platform", texture: "course-branch", x: 175, height: 92 },
-      { role: "decor", texture: "course-tree", x: 430 },
-      { role: "platform", texture: "course-branch", x: 335, height: 92 },
-      { role: "decor", texture: "course-house", x: 700 },
-      { role: "decor", texture: "course-fence", x: 835 },
-      { role: "hazard", texture: "course-bush", x: 980 },
-    ],
-  },
-  {
-    name: "branches-hautes",
-    length: 1180,
-    elements: [
-      { role: "decor", texture: "course-tree", x: 165 },
-      { role: "platform", texture: "course-branch", x: 170, height: 96 },
-      { role: "platform", texture: "course-branch", x: 305, height: 96 },
-      { role: "decor", texture: "course-tree", x: 400 },
-      { role: "platform", texture: "course-branch", x: 605, height: 216 },
-      { role: "decor", texture: "course-tree", x: 635 },
-      { role: "platform", texture: "course-branch", x: 740, height: 216 },
-      { role: "decor", texture: "course-tree", x: 870 },
-      { role: "platform", texture: "course-branch", x: 875, height: 322 },
-      { role: "platform", texture: "course-branch", x: 975, height: 322 },
-      { role: "hazard", texture: "course-rock", x: 1060 },
-    ],
-  },
-];
-
-const HITBOXES = {
-  "course-rock": [44, 27, 5, 8],
-  "course-bush": [52, 34, 6, 13],
-  "course-zebu": [86, 52, 10, 14],
-  "course-chicken": [31, 31, 6, 7],
-  "course-hay": [62, 42, 5, 8],
-};
 
 export default class RunnerCourse {
   constructor(scene) {
     this.scene = scene;
-    this.hazards = scene.physics.add.group({ allowGravity: false, immovable: true });
-    this.platforms = scene.physics.add.group({ allowGravity: false, immovable: true });
+    this.hazards = scene.physics.add.group({
+      allowGravity: false,
+      immovable: true,
+    });
+    this.platforms = scene.physics.add.group({
+      allowGravity: false,
+      immovable: true,
+    });
     this.decorations = scene.add.group();
     this.createPools();
   }
@@ -107,7 +27,11 @@ export default class RunnerCourse {
     }
     for (let index = 0; index < 36; index += 1) {
       const decoration = this.scene.add.image(-300, -300, "course-bush");
-      decoration.setOrigin(0.5, 1).setDepth(2).setActive(false).setVisible(false);
+      decoration
+        .setOrigin(0.5, 1)
+        .setDepth(2)
+        .setActive(false)
+        .setVisible(false);
       this.decorations.add(decoration);
     }
   }
@@ -118,36 +42,46 @@ export default class RunnerCourse {
     this.cursorX = width + 330;
     this.elapsed = 0;
     this.hazards.getChildren().forEach((item) => item.disableBody(true, true));
-    this.platforms.getChildren().forEach((item) => item.disableBody(true, true));
+    this.platforms
+      .getChildren()
+      .forEach((item) => item.disableBody(true, true));
     this.decorations.getChildren().forEach((item) => {
       item.setActive(false).setVisible(false).clearTint();
     });
     this.fillAhead(width);
+    this.lastRandomIndex = undefined;
   }
 
   fillAhead(width) {
     while (this.cursorX < width + 1300) {
       const sequence = this.pickSequence();
+      if (!sequence) return;
       this.spawnSequence(sequence, this.cursorX);
       this.cursorX += sequence.length;
     }
   }
 
   pickSequence() {
-    if (this.sequenceIndex < SEQUENCES.length) {
-      return SEQUENCES[this.sequenceIndex++];
+    const list = SEQUENCES_BY_THEME[this.scene.currentTheme.id];
+    if (!Array.isArray(list) || list.length === 0) {
+      console.warn(
+        `No course sequences configured for theme "${this.scene.currentTheme.id}".`
+      );
+      return undefined;
     }
-    const previous = this.lastRandomIndex;
-    let index = this.scene.rng.between(0, SEQUENCES.length - 1);
-    if (index === previous) index = (index + 1) % SEQUENCES.length;
+    if (this.sequenceIndex < list.length) return list[this.sequenceIndex++];
+    let index = this.scene.rng.between(0, list.length - 1);
+    if (index === this.lastRandomIndex) index = (index + 1) % list.length;
     this.lastRandomIndex = index;
-    return SEQUENCES[index];
+    return list[index];
   }
 
   spawnSequence(sequence, startX) {
+    if (!sequence?.elements) return;
     sequence.elements.forEach((definition) => {
       if (definition.role === "hazard") this.spawnHazard(definition, startX);
-      else if (definition.role === "platform") this.spawnPlatform(definition, startX);
+      else if (definition.role === "platform")
+        this.spawnPlatform(definition, startX);
       else this.spawnDecoration(definition, startX);
     });
   }
@@ -164,7 +98,12 @@ export default class RunnerCourse {
       true
     );
     hazard.body.setAllowGravity(false).setImmovable(true);
-    const [width, height, offsetX, offsetY] = HITBOXES[definition.texture];
+    const [width, height, offsetX, offsetY] = HITBOXES[definition.texture] ?? [
+      hazard.width,
+      hazard.height,
+      0,
+      0,
+    ];
     hazard.body.setSize(width, height).setOffset(offsetX, offsetY);
     hazard.setDataEnabled();
     hazard.data.set({
@@ -214,7 +153,9 @@ export default class RunnerCourse {
       if (!hazard.active) return;
       hazard.x -= movement;
       if (hazard.data.get("dynamic")) {
-        hazard.y = this.groundY - Math.abs(Math.sin(this.elapsed * 5 + hazard.data.get("phase"))) * 4;
+        hazard.y =
+          this.groundY -
+          Math.abs(Math.sin(this.elapsed * 5 + hazard.data.get("phase"))) * 4;
       }
       hazard.body.updateFromGameObject();
       if (hazard.x < -160) hazard.disableBody(true, true);
@@ -260,5 +201,3 @@ export default class RunnerCourse {
     // Movement is manual, so leaving update() is enough to freeze every pool.
   }
 }
-
-export { SEQUENCES };
