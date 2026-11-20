@@ -11,6 +11,8 @@ import createCourseTextures from "./runner/createCourseTextures";
 import RunnerCourse from "./runner/RunnerCourse";
 import { configureButtonInput } from "../ui/configureButtonInput.js";
 import { THEMES, themeForScore } from "./runner/themes";
+import createKeyboardMenu from "../ui/createKeyboardMenu.js";
+
 
 const BUTTON_HEIGHT = 50;
 const BUTTON_COUNT = 4;
@@ -222,6 +224,13 @@ export default class MovementScene extends Phaser.Scene {
     this.buttons = [];
     this.createButton(["Play", "PLAY"], 0);
     this.createButton(["Home", "Startup"], 1);
+
+    this.keyboardMenu = createKeyboardMenu(this, {
+      getButtons: () => this.buttons,
+      setSelected: (b, on) =>
+        this.setButtonState(b, on ? "selected" : "normal"),
+      activate: (b) => b.activate(),
+    });
   }
 
   layout({ width, height }) {
@@ -398,9 +407,21 @@ export default class MovementScene extends Phaser.Scene {
     button.on("pointerover", () => this.setButtonState(button, "hover"));
     button.on("pointerout", () => this.setButtonState(button, "normal"));
     button.on("pointerdown", () => this.setButtonState(button, "pressed"));
-    button.on("pointerup", (pointer) => {
+
+    // button.on("pointerup", (pointer) => {
+    //   this.clickSong.play();
+    //   this.setButtonState(button, "hover");
+    //   if (button.message == "PLAY") {
+    //     if (this.state === STATE.READY) this.startGame();
+    //     else if (this.state === STATE.OVER) this.resetGame(true);
+    //   } else {
+    //     this.moveSong.stop();
+    //     this.scene.start("Startup");
+    //   }
+    // });
+
+    button.activate = () => {
       this.clickSong.play();
-      this.setButtonState(button, "hover");
       if (button.message == "PLAY") {
         if (this.state === STATE.READY) this.startGame();
         else if (this.state === STATE.OVER) this.resetGame(true);
@@ -408,7 +429,12 @@ export default class MovementScene extends Phaser.Scene {
         this.moveSong.stop();
         this.scene.start("Startup");
       }
+    };
+    button.on("pointerup", () => {
+      this.setButtonState(button, "hover");
+      button.activate();
     });
+
     this.drawButton(button);
     this.buttons.push(button);
   }
@@ -458,7 +484,16 @@ export default class MovementScene extends Phaser.Scene {
     button.state = state;
     this.drawButton(button);
     this.tweens.killTweensOf(button);
-    const scale = state === "pressed" ? 0.96 : state === "hover" ? 1.035 : 1;
+
+    // const scale = state === "pressed" ? 0.96 : state === "hover" ? 1.035 : 1;
+
+    const scale =
+      state === "pressed"
+        ? 0.96
+        : state === "hover" || state === "selected"
+        ? 1.035
+        : 1;
+
     this.tweens.add({ targets: button, scale, duration: 90, ease: "Quad.Out" });
   }
 

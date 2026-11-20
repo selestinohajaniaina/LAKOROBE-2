@@ -8,6 +8,7 @@ import fontUrl from "../assets/fonts/SuperPixel.ttf";
 import musicUrl from "../assets/song/startup1.mp3";
 import clickUrl from "../assets/song/popup.mp3";
 import { configureButtonInput } from "../ui/configureButtonInput.js";
+import createKeyboardMenu from "../ui/createKeyboardMenu.js";
 
 const BUTTON_HEIGHT = 50;
 const BUTTON_COUNT = 5;
@@ -115,6 +116,13 @@ export default class Startup extends Phaser.Scene {
     this.createButton(["ALGO", "ProgrammingLabScene"], 1);
     this.createButton(["Mission", "hello"], 2);
     this.createButton(["Level", "hello"], 3);
+
+    this.keyboardMenu = createKeyboardMenu(this, {
+      getButtons: () => this.buttons,
+      setSelected: (b, on) =>
+        this.setButtonState(b, on ? "selected" : "normal"),
+      activate: (b) => b.activate(),
+    });
   }
 
   setResize() {
@@ -274,11 +282,24 @@ export default class Startup extends Phaser.Scene {
     button.on("pointerover", () => this.setButtonState(button, "hover"));
     button.on("pointerout", () => this.setButtonState(button, "normal"));
     button.on("pointerdown", () => this.setButtonState(button, "pressed"));
-    button.on("pointerup", (pointer) => {
+
+    // button.on("pointerup", (pointer) => {
+    //   this.clickSong.play();
+    //   this.setButtonState(button, "hover");
+    //   if (["Movement", "ProgrammingLabScene"].includes(button.message))
+    //     this.scene.start(button.message);
+    // });
+
+    button.activate = () => {
       this.clickSong.play();
+      if (["Movement", "ProgrammingLabScene"].includes(button.message))
+        this.scene.start(button.message);
+    };
+    button.on("pointerup", () => {
       this.setButtonState(button, "hover");
-      if (["Movement", "ProgrammingLabScene"].includes(button.message)) this.scene.start(button.message);
+      button.activate();
     });
+
     this.drawButton(button);
     this.buttons.push(button);
   }
@@ -328,7 +349,14 @@ export default class Startup extends Phaser.Scene {
     button.state = state;
     this.drawButton(button);
     this.tweens.killTweensOf(button);
-    const scale = state === "pressed" ? 0.96 : state === "hover" ? 1.035 : 1;
+    // const scale = state === "pressed" ? 0.96 : state === "hover" ? 1.035 : 1;
+    const scale =
+      state === "pressed"
+        ? 0.96
+        : state === "hover" || state === "selected"
+        ? 1.035
+        : 1;
+
     this.tweens.add({ targets: button, scale, duration: 90, ease: "Quad.Out" });
   }
 
@@ -340,9 +368,9 @@ export default class Startup extends Phaser.Scene {
     const twoColumns = nomberOfButton > 4 && W > 620;
     const column = twoColumns ? position % 2 : 0;
     const row = twoColumns ? Math.floor(position / 2) : position;
-    let x = twoColumns ? W * (column ? .7 : .3) : W / 2;
+    let x = twoColumns ? W * (column ? 0.7 : 0.3) : W / 2;
     let y = H / 2 + BUTTON_HEIGHT * 1.55 + row * (BUTTON_HEIGHT + gap);
-    let w = Math.min(twoColumns ? 280 : 320, twoColumns ? W * .38 : W / 2);
+    let w = Math.min(twoColumns ? 280 : 320, twoColumns ? W * 0.38 : W / 2);
     w = Math.max(150, w);
     return { x, y, w };
   }
