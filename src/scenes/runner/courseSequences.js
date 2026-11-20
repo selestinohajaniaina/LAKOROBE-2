@@ -99,17 +99,17 @@ const highRoute = ({ decor, ledge, hazard }) => ({
 const DESERT = [
   { name: "oasis", length: 950, elements: [
     { role: "decor", texture: "desert-tent", x: 200 },
-    { role: "decor", texture: "desert-palm", x: 420 },
-    { role: "hazard", texture: "desert-cactus", x: 560 },
-    { role: "decor", texture: "desert-bush", x: 760 },
-    { role: "hazard", texture: "desert-rock", x: 900 },
+    { role: "decor", texture: "desert-palm", x: 520 },
+    { role: "hazard", texture: "desert-cactus", x: 860 },
+    { role: "decor", texture: "desert-bush", x: 960 },
+    { role: "hazard", texture: "desert-rock", x: 980 },
   ] },
   { name: "caravane", length: 1100, elements: [
     { role: "decor", texture: "desert-palm", x: 160 },
     { role: "decor", texture: "desert-bush", x: 300 },
     { role: "hazard", texture: "desert-camel", x: 480 },
     { role: "decor", texture: "desert-tent", x: 720 },
-    { role: "hazard", texture: "desert-cactus", x: 980 },
+    { role: "hazard", texture: "desert-cactus", x: 1080 },
   ] },
   { name: "palmes-et-dalles", length: 1100, elements: [
     { role: "decor", texture: "desert-palm", x: 180 },
@@ -119,7 +119,7 @@ const DESERT = [
     { role: "hazard", texture: "desert-rock", x: 620 },
     { role: "decor", texture: "desert-palm", x: 700 },
     { role: "platform", texture: "desert-ledge", x: 705, height: 90 },
-    { role: "hazard", texture: "desert-cactus", x: 960 },
+    { role: "hazard", texture: "desert-cactus", x: 1080 },
   ] },
   highRoute({ decor: "desert-palm", ledge: "desert-ledge", hazard: "desert-camel" }),
 ];
@@ -130,13 +130,13 @@ const SNOW = [
     { role: "decor", texture: "snow-snowman", x: 400 },
     { role: "hazard", texture: "snow-rock", x: 560 },
     { role: "decor", texture: "snow-pine", x: 760 },
-    { role: "hazard", texture: "snow-spikes", x: 880 },
+    { role: "hazard", texture: "snow-spikes", x: 1080 },
   ] },
   { name: "village-inuit", length: 1100, elements: [
     { role: "decor", texture: "snow-igloo", x: 220 },
     { role: "hazard", texture: "snow-husky", x: 420 },
     { role: "decor", texture: "snow-pine", x: 650 },
-    { role: "hazard", texture: "snow-spikes", x: 820 },
+    { role: "hazard", texture: "snow-spikes", x: 1020 },
     { role: "decor", texture: "snow-snowman", x: 980 },
   ] },
   { name: "pins-et-glace", length: 1100, elements: [
@@ -147,7 +147,7 @@ const SNOW = [
     { role: "hazard", texture: "snow-rock", x: 640 },
     { role: "decor", texture: "snow-pine", x: 700 },
     { role: "platform", texture: "snow-ledge", x: 705, height: 90 },
-    { role: "hazard", texture: "snow-spikes", x: 960 },
+    { role: "hazard", texture: "snow-spikes", x: 1060 },
   ] },
   highRoute({ decor: "snow-pine", ledge: "snow-ledge", hazard: "snow-husky" }),
 ];

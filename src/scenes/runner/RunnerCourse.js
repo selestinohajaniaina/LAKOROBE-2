@@ -1,5 +1,7 @@
 import { SEQUENCES_BY_THEME, HITBOXES } from "./courseSequences";
-const HAZARD_X_OFFSET = 55;
+
+const HAZARD_X_OFFSET = 120; // plus grand = obstacles plus à droite
+const SEQUENCE_GAP = 120; // pixels vides entre deux séquences
 
 export default class RunnerCourse {
   constructor(scene) {
@@ -57,7 +59,7 @@ export default class RunnerCourse {
       const sequence = this.pickSequence();
       if (!sequence) return;
       this.spawnSequence(sequence, this.cursorX);
-      this.cursorX += sequence.length;
+      this.cursorX += sequence.length + SEQUENCE_GAP;
     }
   }
 
@@ -92,7 +94,7 @@ export default class RunnerCourse {
     hazard.setTexture(definition.texture).setOrigin(0.5, 1);
     hazard.enableBody(
       true,
-      startX + definition.x + HAZARD_X_OFFSET,
+      startX + definition.x + HAZARD_X_OFFSET + (definition.dx ?? 0),
       this.groundY,
       true,
       true
