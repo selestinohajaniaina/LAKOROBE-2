@@ -1,5 +1,4 @@
 import Phaser from "phaser";
-import backgroundUrl from "../assets/lakorobe/backgroundBamboo.png";
 import fontUrl from "../assets/fonts/SuperPixel.ttf";
 import personIdleUrl from "../assets/sprite/person-1/Idle.png";
 import personJumpUrl from "../assets/sprite/person-1/Jump.png";
@@ -11,6 +10,7 @@ import obstacleSongUrl from "../assets/song/pick-up.mp3";
 import createCourseTextures from "./runner/createCourseTextures";
 import RunnerCourse from "./runner/RunnerCourse";
 import { configureButtonInput } from "../ui/configureButtonInput.js";
+import { THEMES, themeForScore } from "./runner/themes";
 
 const BUTTON_HEIGHT = 50;
 const BUTTON_COUNT = 4;
@@ -51,7 +51,7 @@ export default class MovementScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("runner-background", backgroundUrl);
+    THEMES.forEach((t) => this.load.image(`runner-bg-${t.id}`, t.url));
     if (!isSuperPixelLoaded()) {
       this.load.font(SUPER_PIXEL_FAMILY, fontUrl, "truetype");
     }
@@ -123,25 +123,28 @@ export default class MovementScene extends Phaser.Scene {
   }
 
   createEnvironment() {
+    const first = THEMES[0];
+    this.currentTheme = first;
+    this.changingTheme = false;
     this.sky = this.add
-      .rectangle(0, 0, 10, 10, 0xddeeb0)
+      .rectangle(0, 0, 10, 10, first.sky)
       .setOrigin(0)
       .setDepth(-10);
     this.background = this.add
-      .tileSprite(0, 0, 10, 10, "runner-background")
+      .tileSprite(0, 0, 10, 10, `runner-bg-${first.id}`)
       .setOrigin(0)
       .setAlpha(0.68)
       .setDepth(-9);
     this.distantPlants = this.add
-      .tileSprite(0, 0, 10, 170, "course-distant-plants")
+      .tileSprite(0, 0, 10, 170, `course-distant-plants-${first.id}`)
       .setOrigin(0)
       .setDepth(-5);
     this.groundVisual = this.add
-      .tileSprite(0, 0, 10, 96, "course-ground")
+      .tileSprite(0, 0, 10, 96, `course-ground-${first.id}`)
       .setOrigin(0)
       .setDepth(1);
     this.foregroundGrass = this.add
-      .tileSprite(0, 0, 10, GRASS_HEIGHT, "course-grass")
+      .tileSprite(0, 0, 10, GRASS_HEIGHT, `course-grass-${first.id}`)
       .setOrigin(0)
       .setTileScale(GRASS_SCALE)
       .setDepth(3)
@@ -205,9 +208,12 @@ export default class MovementScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setDepth(20);
-    // this.backText = this.add
-    //   .text(20, 51, "ÉCHAP : MENU", { ...style, fontSize: "12px" })
-    //   .setDepth(20);
+
+    this.themeText = this.add
+      .text(0, 0, "", { ...style, fontSize: "26px" })
+      .setOrigin(0.5)
+      .setDepth(20)
+      .setAlpha(0);
 
     this.buttons = [];
     this.createButton(["Play", "PLAY"], 0);
@@ -217,18 +223,9 @@ export default class MovementScene extends Phaser.Scene {
   layout({ width, height }) {
     this.physics.world.setBounds(0, 0, width, height);
     this.groundY = Math.max(280, height - 92);
-    this.sky.setSize(width, height);
-    this.background.setSize(width, height);
-    this.background.setTileScale(
-      Math.max(width / this.background.texture.getSourceImage().width, 0.7)
-    );
-    this.distantPlants.setPosition(0, this.groundY - 168).setSize(width, 170);
-    this.groundVisual
-      .setPosition(0, this.groundY)
-      .setSize(width, height - this.groundY);
-    this.foregroundGrass
-      .setPosition(0, this.groundY - GRASS_HEIGHT + 4)
-      .setSize(width, GRASS_HEIGHT);
+
+    this.layoutScenery(width, height);
+
     this.ground.setPosition(width / 2, this.groundY).setSize(width, 32);
     this.ground.body.setSize(width, 32);
     this.ground.body.updateFromGameObject();
@@ -246,6 +243,10 @@ export default class MovementScene extends Phaser.Scene {
   }
 
   resetGame(startImmediately) {
+    this.cameras.main.resetFX();
+    this.changingTheme = false;
+    this.applyTheme(THEMES[0]);
+
     this.distance = 0;
     this.runTime = 0;
     this.scrollSpeed = BASE_SPEED;
@@ -260,9 +261,7 @@ export default class MovementScene extends Phaser.Scene {
       this.state = STATE.READY;
       this.playPlayerAnimation("person-1-idle");
       this.messageText
-        .setText(
-          "PRESS PLAY TO START TO JUMP SCREEN / SPACE / ↑"
-        )
+        .setText("PRESS PLAY TO START TO JUMP SCREEN / SPACE / ↑")
         .setVisible(true);
       // Show all buttons of playing the game
       this.toggleHideButtons(true);
@@ -362,6 +361,11 @@ export default class MovementScene extends Phaser.Scene {
     this.course.update(seconds, this.scrollSpeed, this.scale.width);
 
     this.scoreText.setText(`SCORE ${this.formatScore()}`);
+
+    const theme = themeForScore(Math.floor(this.distance / 100));
+    if (theme !== this.currentTheme && !this.changingTheme)
+      this.changeTheme(theme);
+
     if (!this.isPlayerGrounded()) {
       this.playPlayerAnimation(
         this.player.body.velocity.y < 0 ? "person-1-jump" : "person-1-fall"
@@ -494,5 +498,48 @@ export default class MovementScene extends Phaser.Scene {
     let fontSize = Math.min(20, width / 25);
     fontSize = Math.max(fontSize, 10);
     this.messageText.setFontSize(`${fontSize}px`);
+  }
+
+  layoutScenery(width, height) {
+    const img = this.background.texture.getSourceImage();
+    this.sky.setSize(width, height);
+    this.background
+      .setSize(width, height)
+      .setTileScale(Math.max(width / img.width, height / img.height));
+    this.distantPlants.setPosition(0, this.groundY - 168).setSize(width, 170);
+    this.groundVisual
+      .setPosition(0, this.groundY)
+      .setSize(width, height - this.groundY);
+    this.foregroundGrass
+      .setPosition(0, this.groundY - GRASS_HEIGHT + 4)
+      .setSize(width, GRASS_HEIGHT);
+  }
+
+  applyTheme(theme) {
+    this.currentTheme = theme;
+    this.sky.setFillStyle(theme.sky);
+    this.background.setTexture(`runner-bg-${theme.id}`);
+    this.distantPlants.setTexture(`course-distant-plants-${theme.id}`);
+    this.groundVisual.setTexture(`course-ground-${theme.id}`);
+    this.foregroundGrass.setTexture(`course-grass-${theme.id}`);
+    this.layoutScenery(this.scale.width, this.scale.height);
+  }
+
+  changeTheme(theme) {
+    this.changingTheme = true;
+    const cam = this.cameras.main;
+    cam.once("camerafadeoutcomplete", () => {
+      this.applyTheme(theme);
+      this.themeText.setText(theme.name).setAlpha(1);
+      this.tweens.add({
+        targets: this.themeText,
+        alpha: 0,
+        delay: 1200,
+        duration: 600,
+      });
+      cam.once("camerafadeincomplete", () => (this.changingTheme = false));
+      cam.fadeIn(300, 255, 244, 194);
+    });
+    cam.fadeOut(300, 255, 244, 194);
   }
 }

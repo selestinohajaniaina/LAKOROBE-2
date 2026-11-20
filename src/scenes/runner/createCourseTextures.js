@@ -1,3 +1,5 @@
+import { THEMES } from "./themes";
+
 const createTexture = (scene, key, width, height, draw) => {
   if (scene.textures.exists(key)) return;
   const graphics = scene.make.graphics({ add: false });
@@ -7,33 +9,35 @@ const createTexture = (scene, key, width, height, draw) => {
 };
 
 export default function createCourseTextures(scene) {
-  createTexture(scene, "course-ground", 256, 96, (g) => {
-    g.fillStyle(0x9f4728).fillRect(0, 0, 256, 96);
-    g.fillStyle(0xc96535).fillRect(0, 0, 256, 12);
-    g.fillStyle(0x7d351f);
-    g.fillRect(18, 31, 18, 5).fillRect(116, 66, 25, 5);
-    g.fillRect(211, 39, 12, 4).fillRect(65, 83, 9, 4);
-    g.fillStyle(0xe18a4f);
-    g.fillRect(54, 24, 8, 4).fillRect(170, 48, 13, 4);
-  });
+  THEMES.forEach(({ id, ground, plants, grass }) => {
+    createTexture(scene, `course-ground-${id}`, 256, 96, (g) => {
+      g.fillStyle(ground.base).fillRect(0, 0, 256, 96);
+      g.fillStyle(ground.top).fillRect(0, 0, 256, 12);
+      g.fillStyle(ground.dark);
+      g.fillRect(18, 31, 18, 5).fillRect(116, 66, 25, 5);
+      g.fillRect(211, 39, 12, 4).fillRect(65, 83, 9, 4);
+      g.fillStyle(ground.light);
+      g.fillRect(54, 24, 8, 4).fillRect(170, 48, 13, 4);
+    });
 
-  createTexture(scene, "course-distant-plants", 640, 170, (g) => {
-    g.fillStyle(0x416f36);
-    g.fillTriangle(0, 170, 110, 55, 230, 170);
-    g.fillTriangle(155, 170, 330, 25, 510, 170);
-    g.fillTriangle(405, 170, 560, 70, 640, 170);
-    g.fillStyle(0x5e8d42);
-    g.fillCircle(65, 144, 44).fillCircle(137, 139, 55);
-    g.fillCircle(425, 142, 52).fillCircle(530, 145, 43);
-  });
+    createTexture(scene, `course-distant-plants-${id}`, 640, 170, (g) => {
+      g.fillStyle(plants.back);
+      g.fillTriangle(0, 170, 110, 55, 230, 170);
+      g.fillTriangle(155, 170, 330, 25, 510, 170);
+      g.fillTriangle(405, 170, 560, 70, 640, 170);
+      g.fillStyle(plants.front);
+      g.fillCircle(65, 144, 44).fillCircle(137, 139, 55);
+      g.fillCircle(425, 142, 52).fillCircle(530, 145, 43);
+    });
 
-  createTexture(scene, "course-grass", 512, 80, (g) => {
-    g.fillStyle(0x355c2b);
-    for (let x = 0; x < 512; x += 64) {
-      g.fillTriangle(x, 80, x + 18, 20, x + 29, 80);
-      g.fillTriangle(x + 20, 80, x + 43, 38, x + 54, 80);
-    }
-    g.fillStyle(0x6b913d).fillRect(0, 72, 512, 8);
+    createTexture(scene, `course-grass-${id}`, 512, 80, (g) => {
+      g.fillStyle(grass.blade);
+      for (let x = 0; x < 512; x += 64) {
+        g.fillTriangle(x, 80, x + 18, 20, x + 29, 80);
+        g.fillTriangle(x + 20, 80, x + 43, 38, x + 54, 80);
+      }
+      g.fillStyle(grass.top).fillRect(0, 72, 512, 8);
+    });
   });
 
   createTexture(scene, "course-house", 210, 120, (g) => {
@@ -43,7 +47,9 @@ export default function createCourseTextures(scene) {
     g.fillStyle(0x7b3d24).fillTriangle(18, 51, 105, 11, 192, 51);
     g.fillStyle(0x42271e).fillRect(83, 81, 44, 39);
     g.fillStyle(0x9ed3cf).fillRect(42, 72, 27, 25).fillRect(141, 72, 27, 25);
-    g.lineStyle(4, 0x4d3525).strokeRect(42, 72, 27, 25).strokeRect(141, 72, 27, 25);
+    g.lineStyle(4, 0x4d3525)
+      .strokeRect(42, 72, 27, 25)
+      .strokeRect(141, 72, 27, 25);
   });
 
   createTexture(scene, "course-roof", 210, 38, (g) => {
@@ -98,7 +104,9 @@ export default function createCourseTextures(scene) {
 
   createTexture(scene, "course-zebu", 104, 66, (g) => {
     g.fillStyle(0xefe0bd).fillRoundedRect(14, 20, 67, 35, 12);
-    g.fillStyle(0xc7ad7e).fillCircle(82, 28, 17).fillTriangle(69, 17, 75, 2, 82, 19);
+    g.fillStyle(0xc7ad7e)
+      .fillCircle(82, 28, 17)
+      .fillTriangle(69, 17, 75, 2, 82, 19);
     g.fillTriangle(84, 18, 95, 3, 93, 22);
     g.fillStyle(0x5d402d).fillRect(23, 49, 8, 17).fillRect(65, 49, 8, 17);
     g.fillStyle(0x694a31).fillCircle(86, 28, 3);
