@@ -112,10 +112,10 @@ export default class Startup extends Phaser.Scene {
       loop: false,
     });
 
-    this.createButton(["JUMP", "Movement"], 0);
-    this.createButton(["ALGO", "ProgrammingLabScene"], 1);
-    this.createButton(["Mission", "hello"], 2);
-    this.createButton(["Level", "hello"], 3);
+    this.createButton(["TRAVEL", "Movement"], 0);
+    this.createButton(["TRAVEL", "Movement"], 1);
+    this.createButton(["ALGO", "ProgrammingLabScene"], 2);
+    this.createButton(["ALGO", "ProgrammingLabScene"], 3);
 
     this.keyboardMenu = createKeyboardMenu(this, {
       getButtons: () => this.buttons,
