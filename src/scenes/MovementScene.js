@@ -261,7 +261,7 @@ export default class MovementScene extends Phaser.Scene {
       this.playPlayerAnimation("person-1-idle");
       this.messageText
         .setText(
-          "APPUIE SUR PLAY POUR COMMENCER\nPOUR SAUTER\nÉCRAN / ESPACE / ↑"
+          "PRESS PLAY TO START TO JUMP SCREEN / SPACE / ↑"
         )
         .setVisible(true);
       // Show all buttons of playing the game
@@ -318,7 +318,7 @@ export default class MovementScene extends Phaser.Scene {
     this.player.setVelocityX(0);
     this.playPlayerAnimation("person-1-idle");
     this.messageText
-      .setText(`GAME OVER\nSCORE FINAL ${this.formatScore()}`)
+      .setText(`GAME OVER\nFINAL SCORE ${this.formatScore()}`)
       .setVisible(true);
     // Hide all buttons of playing the game
     this.toggleHideButtons(true, "Replay");

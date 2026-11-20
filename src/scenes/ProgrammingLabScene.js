@@ -343,8 +343,10 @@ export default class ProgrammingLabScene extends Phaser.Scene {
       .lineStyle(3, 0x70e5bf)
       .strokeRect(x, y, w, h)
       .lineStyle(1, 0x7a5aa5)
-      .lineBetween(x + 8, y + 34, x + w - 8, y + 34);
-    this.texts.lines.setText(
+      .lineBetween(x + 8, y + 45, x + w - 8, y + 34);
+    this.texts.lines
+    .setFontSize("20px")
+    .setText(
       `LINES: ${this.commands.commands.length}/${this.level.lines}`
     );
     const available = Math.max(
