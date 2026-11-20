@@ -393,7 +393,6 @@ export default class MovementScene extends Phaser.Scene {
     button.on("pointerdown", () => this.setButtonState(button, "pressed"));
     button.on("pointerup", (pointer) => {
       this.clickSong.play();
-      if (!button.getBounds().contains(pointer.x, pointer.y)) return;
       this.setButtonState(button, "hover");
       if (button.message == "PLAY") {
         if (this.state === STATE.READY) this.startGame();

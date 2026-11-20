@@ -147,10 +147,8 @@ export default class ProgrammingLabScene extends Phaser.Scene {
     button.on("pointerdown", () => this.paintButton(button, "down"));
     button.on("pointerup", (pointer) => {
       this.paintButton(button, "hover");
-      if (button.getBounds().contains(pointer.x, pointer.y)) {
-        this.clickSound.play();
-        callback();
-      }
+      this.clickSound.play();
+      callback();
     });
     this.paintButton(button, "normal");
     this.buttons.push(button);

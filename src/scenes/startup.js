@@ -276,7 +276,6 @@ export default class Startup extends Phaser.Scene {
     button.on("pointerdown", () => this.setButtonState(button, "pressed"));
     button.on("pointerup", (pointer) => {
       this.clickSong.play();
-      if (!button.getBounds().contains(pointer.x, pointer.y)) return;
       this.setButtonState(button, "hover");
       if (["Movement", "ProgrammingLabScene"].includes(button.message)) this.scene.start(button.message);
     });
