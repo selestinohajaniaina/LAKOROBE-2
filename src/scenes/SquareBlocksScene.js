@@ -96,12 +96,12 @@ export default class SquareBlocksScene extends Phaser.Scene {
     this.titleText.setOrigin(0, 0.5).setDepth(2);
     this.scoreText = this.add.text(0, 0, "", this.textStyle());
     this.scoreText.setOrigin(1, 0.5).setDepth(2);
-    this.nextLabel = this.add.text(0, 0, "SUIVANT", this.textStyle());
+    this.nextLabel = this.add.text(0, 0, "NEXT", this.textStyle());
     this.nextLabel.setOrigin(0.5, 0).setDepth(2);
     this.imageLabel = this.add.text(
       0,
       0,
-      "IMAGE À CONSTRUIRE",
+      "IMAGE TO BUILD",
       this.textStyle({ align: "center" })
     );
     this.imageLabel.setOrigin(0.5, 0).setDepth(2);
@@ -458,7 +458,7 @@ export default class SquareBlocksScene extends Phaser.Scene {
 
   updateHud() {
     this.titleText.setText(
-      `NIVEAU ${this.level}  ${this.board.columns}X${this.board.rows}`
+      `LEVEL ${this.level}  ${this.board.columns}X${this.board.rows}`
     );
     this.scoreText.setText(`SCORE ${this.score}`);
   }
