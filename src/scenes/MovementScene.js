@@ -218,9 +218,14 @@ export default class MovementScene extends Phaser.Scene {
       .setDepth(20);
 
     this.themeText = this.add
-      .text(0, 0, "", { ...style, fontSize: "26px" })
-      .setOrigin(0.5)
-      .setDepth(20)
+      .text(0, 0, "", {
+        ...style,
+        fontSize: "44px",
+        strokeThickness: 8,
+        align: "center",
+      })
+      .setOrigin(0.5, 0)
+      .setDepth(25)
       .setAlpha(0);
 
     this.buttons = [];
@@ -254,6 +259,9 @@ export default class MovementScene extends Phaser.Scene {
       this.placePlayerOnGround();
     }
     this.messageText.setPosition(width / 2, Math.max(110, height * 0.32));
+
+    const themeSize = Phaser.Math.Clamp(width / 18, 24, 56);
+    this.themeText.setFontSize(`${themeSize}px`).setPosition(width / 2, 24);
 
     this.layoutHearts(width);
 
@@ -616,7 +624,22 @@ export default class MovementScene extends Phaser.Scene {
     cam.once("camerafadeoutcomplete", () => {
       this.applyTheme(theme);
       // this.course.reset(this.groundY, this.scale.width); // nouveaux obstacles du thème
-      this.themeText.setText(theme.name).setAlpha(1);
+
+      this.tweens.killTweensOf(this.themeText);
+      this.themeText.setText(theme.name).setAlpha(1).setScale(0.6);
+      this.tweens.add({
+        targets: this.themeText,
+        scale: 1,
+        duration: 300,
+        ease: "Back.Out",
+      });
+      this.tweens.add({
+        targets: this.themeText,
+        alpha: 0,
+        delay: 2000,
+        duration: 700,
+      });
+
       this.tweens.add({
         targets: this.themeText,
         alpha: 0,

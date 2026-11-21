@@ -167,6 +167,11 @@ const SAN_FRANCISCO = standard({
   hazard: ["sf-crab", "sf-sealion", "sf-cable"],
   ledge: "sf-ledge",
 });
+const NEVADA = standard({
+  decor: ["ne-building", "ne-pine", "ne-tower"],
+  hazard: ["ne-rock", "ne-mustang", "ne-car"],
+  ledge: "ne-ledge",
+});
 
 const DESERT = [
   {
@@ -479,6 +484,7 @@ export const SEQUENCES_BY_THEME = {
   chicago: CHICAGO,
   vegas: VEGAS,
   sanfrancisco: SAN_FRANCISCO,
+  nevada: NEVADA,
 };
 
 // [largeur, hauteur, offsetX, offsetY] : le bas de la hitbox colle au bas de la texture.
@@ -543,4 +549,8 @@ export const HITBOXES = {
   "sf-cable": [88, 48, 11, 14],
   "sf-sealion": [66, 28, 7, 8],
   "sf-crab": [42, 28, 5, 6],
+  // Nevada
+  "ne-car": [80, 36, 14, 14],
+  "ne-mustang": [76, 46, 12, 24],
+  "ne-rock": [44, 26, 6, 8],
 };

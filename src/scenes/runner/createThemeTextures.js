@@ -928,6 +928,63 @@ function sanFrancisco(s) {
   ledgeTexture(s, "sf-ledge", 0xc0392b, 0xe8705f, 0x7a2418);
 }
 
+// ---------- NEVADA ----------
+function nevada(s) {
+  make(s, "ne-building", 130, 170, (g) => {
+    g.fillStyle(0xf2e3a0).fillRect(10, 16, 110, 154);
+    g.fillStyle(0xd9c880).fillRect(10, 16, 110, 8);
+    g.fillStyle(0x7a7f8a).fillRect(6, 8, 118, 10);
+    g.fillStyle(0x6f7f94);
+    for (let r = 0; r < 5; r += 1)
+      for (let c = 0; c < 4; c += 1)
+        g.fillRect(22 + c * 24, 34 + r * 26, 14, 16);
+    g.fillStyle(0x5a6a7a).fillRect(54, 146, 22, 24);
+  });
+  make(s, "ne-pine", 120, 230, (g) => {
+    g.fillStyle(0x6b4a2a).fillRect(55, 176, 10, 54);
+    g.fillStyle(0x2f6b3a).fillTriangle(60, 8, 28, 80, 92, 80);
+    g.fillTriangle(60, 50, 18, 130, 102, 130).fillTriangle(
+      60,
+      100,
+      8,
+      190,
+      112,
+      190
+    );
+    g.fillStyle(0x4f9a4a).fillTriangle(60, 20, 46, 60, 74, 60);
+    g.fillTriangle(60, 64, 40, 110, 80, 110);
+    g.fillStyle(0xf4faff).fillTriangle(60, 8, 50, 30, 70, 30);
+  });
+  skyscraper(s, "ne-tower", 90, 250, 0xcfe6ee, 0xa9c9d6, 0x6f8fa8, 0x8fb0c4);
+  make(s, "ne-rock", 56, 34, (g) => {
+    g.fillStyle(0x8a8f99)
+      .fillTriangle(2, 32, 20, 6, 36, 32)
+      .fillTriangle(18, 32, 38, 2, 54, 32);
+    g.fillStyle(0xb4bac4).fillTriangle(8, 30, 21, 12, 28, 30);
+    g.fillStyle(0xf4faff)
+      .fillTriangle(15, 16, 20, 6, 26, 16)
+      .fillTriangle(32, 12, 38, 2, 44, 14);
+  });
+  make(s, "ne-mustang", 100, 70, (g) => {
+    g.fillStyle(0x6b4226)
+      .fillRect(24, 46, 6, 24)
+      .fillRect(36, 46, 6, 24)
+      .fillRect(62, 46, 6, 24)
+      .fillRect(74, 46, 6, 24);
+    g.fillStyle(0x8a5a32)
+      .fillRoundedRect(16, 24, 70, 28, 12)
+      .fillRoundedRect(72, 8, 14, 34, 6);
+    g.fillRoundedRect(80, 6, 18, 12, 5).fillTriangle(82, 6, 84, 0, 88, 6);
+    g.fillStyle(0x3a2412)
+      .fillRect(68, 8, 5, 30)
+      .fillTriangle(16, 28, 4, 54, 22, 42);
+    g.fillStyle(0xf5f0e6).fillRect(94, 8, 4, 6);
+    g.fillStyle(0x111111).fillCircle(91, 10, 2);
+  });
+  car(s, "ne-car", 0xe85d4f, 0x8fd3ee, 0xffffff);
+  ledgeTexture(s, "ne-ledge", 0x8a5a32, 0xc4905a, 0x5a3a22);
+}
+
 export default function createThemeTextures(scene) {
   desert(scene);
   snow(scene);
@@ -941,6 +998,7 @@ export default function createThemeTextures(scene) {
   texas(scene);
   chicago(scene);
   vegas(scene);
+  nevada(scene);
   sanFrancisco(scene);
   make(scene, "city-lamp", 26, 150, (g) => {
     g.fillStyle(0x2d3a2f)

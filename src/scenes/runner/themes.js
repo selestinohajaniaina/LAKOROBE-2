@@ -12,6 +12,7 @@ import texasUrl from "../../assets/runner-themes/texas.jpg";
 import chicagoUrl from "../../assets/runner-themes/chicago.jpg";
 import vegasUrl from "../../assets/runner-themes/Las-Vegas.jpg";
 import sfUrl from "../../assets/runner-themes/san-francisco.jpg";
+import nevadaUrl from "../../assets/runner-themes/nevada.jpg";
 
 export const THEME_STEP = 40; // changement de thème tous les 40 points
 
@@ -27,7 +28,7 @@ export const THEMES = [
   },
   {
     id: "desert",
-    name: "DESERT",
+    name: "DESERT DU SAHARA",
     url: desertUrl,
     sky: 0xbfe3f5,
     ground: { base: 0xd9a252, top: 0xefc377, dark: 0xb9803a, light: 0xf6d99a },
@@ -63,7 +64,7 @@ export const THEMES = [
   },
   {
     id: "beach",
-    name: "OCEAN DRIVE",
+    name: "CALIFORNIA - OCEAN DRIVE",
     url: beachUrl,
     sky: 0x8ccdf0,
     ground: { base: 0x7b5ea7, top: 0xb48ad6, dark: 0x5a4380, light: 0xd9b3f0 },
@@ -72,7 +73,7 @@ export const THEMES = [
   },
   {
     id: "sunset",
-    name: "SUNSET BLVD",
+    name: "CALIFORNIA - SUNSET BLVD",
     url: sunsetUrl,
     sky: 0xf59a3a,
     ground: { base: 0xd97a3a, top: 0xf0a04a, dark: 0x9b4f26, light: 0xffc46b },
@@ -99,7 +100,7 @@ export const THEMES = [
   },
   {
     id: "miami",
-    name: "MIAMI",
+    name: "MIAMI - FLORIDA",
     url: miamiUrl,
     sky: 0x4fa8f8,
     ground: { base: 0xe7c58a, top: 0xf6dfae, dark: 0xc29a5a, light: 0xffeccb },
@@ -141,6 +142,15 @@ export const THEMES = [
     ground: { base: 0x6a6f7a, top: 0x9a9fab, dark: 0x4a4f5a, light: 0xc0c4cc },
     plants: { back: 0x7a8fa8, front: 0x9ab0c4 },
     grass: { blade: 0x4a8a3a, top: 0x82b85a },
+  },
+  {
+    id: "nevada",
+    name: "NEVADA",
+    url: nevadaUrl,
+    sky: 0xd4ecf7,
+    ground: { base: 0x7f8590, top: 0xa9aeb8, dark: 0x5f646e, light: 0xc5c9d0 },
+    plants: { back: 0xb8c4d0, front: 0x8fbf6a },
+    grass: { blade: 0x4f9a4a, top: 0x9ad06a },
   },
 ];
 
