@@ -28,7 +28,7 @@ export const THEMES = [
   },
   {
     id: "desert",
-    name: "DESERT DU SAHARA",
+    name: "SAHARA",
     url: desertUrl,
     sky: 0xbfe3f5,
     ground: { base: 0xd9a252, top: 0xefc377, dark: 0xb9803a, light: 0xf6d99a },
