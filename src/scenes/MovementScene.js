@@ -10,7 +10,7 @@ import obstacleSongUrl from "../assets/song/pick-up.mp3";
 import createCourseTextures from "./runner/createCourseTextures";
 import RunnerCourse from "./runner/RunnerCourse";
 import { configureButtonInput } from "../ui/configureButtonInput.js";
-import { THEMES, themeForScore } from "./runner/themes";
+import { THEMES, THEME_STEP } from "./runner/themes";
 import createKeyboardMenu from "../ui/createKeyboardMenu.js";
 
 const BUTTON_HEIGHT = 50;
@@ -266,6 +266,8 @@ export default class MovementScene extends Phaser.Scene {
     this.clearInvincibility();
     this.updateHearts(false);
 
+    this.pendingTheme = null;
+    this.themeStartScore = 0;
     this.cameras.main.resetFX();
     this.changingTheme = false;
     this.distance = 0;
@@ -387,7 +389,7 @@ export default class MovementScene extends Phaser.Scene {
 
     const seconds = Math.min(delta, 50) / 1000;
     this.runTime += seconds;
-    this.scrollSpeed = Math.min(MAX_SPEED, BASE_SPEED + this.runTime * 3);
+    this.scrollSpeed = Math.min(MAX_SPEED, BASE_SPEED + this.runTime * 5); // SPEED & VITESSE
     this.distance += this.scrollSpeed * seconds;
     this.background.tilePositionX += this.scrollSpeed * seconds * 0.035;
     this.distantPlants.tilePositionX += this.scrollSpeed * seconds * 0.18;
@@ -398,9 +400,30 @@ export default class MovementScene extends Phaser.Scene {
 
     this.scoreText.setText(`SCORE ${this.formatScore()}`);
 
-    const theme = themeForScore(Math.floor(this.distance / 100));
-    if (theme !== this.currentTheme && !this.changingTheme)
-      this.changeTheme(theme);
+    const score = Math.floor(this.distance / 100);
+
+    // 1) Prochain thème : seulement si le thème actuel a duré THEME_STEP points
+    //    ET que toutes ses séquences ont été générées.
+    if (
+      !this.pendingTheme &&
+      !this.changingTheme &&
+      score - this.themeStartScore >= THEME_STEP &&
+      this.course.allSequencesSpawned()
+    ) {
+      const next =
+        THEMES[(THEMES.indexOf(this.currentTheme) + 1) % THEMES.length];
+      this.pendingTheme = next;
+      this.course.queueTheme(next.id);
+    }
+
+    // 2) Changement du fond quand l'ancien thème est passé derrière le joueur
+    if (this.pendingTheme && this.course.themeReached(this.playerX)) {
+      const next = this.pendingTheme;
+      this.pendingTheme = null;
+      this.course.themeBoundary = null;
+      this.themeStartScore = score; // le compteur repart du changement réel
+      this.changeTheme(next);
+    }
 
     if (!this.isPlayerGrounded()) {
       this.playPlayerAnimation(
@@ -592,7 +615,7 @@ export default class MovementScene extends Phaser.Scene {
     const cam = this.cameras.main;
     cam.once("camerafadeoutcomplete", () => {
       this.applyTheme(theme);
-      this.course.reset(this.groundY, this.scale.width); // nouveaux obstacles du thème
+      // this.course.reset(this.groundY, this.scale.width); // nouveaux obstacles du thème
       this.themeText.setText(theme.name).setAlpha(1);
       this.tweens.add({
         targets: this.themeText,

@@ -1,7 +1,9 @@
 import { SEQUENCES_BY_THEME, HITBOXES } from "./courseSequences";
 
+const HAZARD_SPACING = 2; // 2 = distance entre obstacles d'une même séquence doublée
 const HAZARD_X_OFFSET = 120; // plus grand = obstacles plus à droite
-const SEQUENCE_GAP = 120; // pixels vides entre deux séquences
+const SEQUENCE_GAP = 200; // pixels vides entre deux séquences
+const TRANSITION_MARGIN = 250; // marge hors écran avant le 1er obstacle du nouveau thème
 
 export default class RunnerCourse {
   constructor(scene) {
@@ -19,15 +21,15 @@ export default class RunnerCourse {
   }
 
   createPools() {
-    for (let index = 0; index < 24; index += 1) {
+    for (let index = 0; index < 40; index += 1) {
       const hazard = this.hazards.create(-300, -300, "course-rock");
       hazard.setOrigin(0.5, 1).setDepth(5).disableBody(true, true);
     }
-    for (let index = 0; index < 18; index += 1) {
+    for (let index = 0; index < 40; index += 1) {
       const platform = this.platforms.create(-300, -300, "course-roof");
       platform.setOrigin(0.5, 0).setDepth(4).disableBody(true, true);
     }
-    for (let index = 0; index < 36; index += 1) {
+    for (let index = 0; index < 70; index += 1) {
       const decoration = this.scene.add.image(-300, -300, "course-bush");
       decoration
         .setOrigin(0.5, 1)
@@ -41,6 +43,9 @@ export default class RunnerCourse {
   reset(groundY, width) {
     this.groundY = groundY;
     this.sequenceIndex = 0;
+    this.lastRandomIndex = undefined;
+    this.spawnThemeId = this.scene.currentTheme.id; // avant fillAhead
+    this.themeBoundary = null;
     this.cursorX = width + 330;
     this.elapsed = 0;
     this.hazards.getChildren().forEach((item) => item.disableBody(true, true));
@@ -50,27 +55,19 @@ export default class RunnerCourse {
     this.decorations.getChildren().forEach((item) => {
       item.setActive(false).setVisible(false).clearTint();
     });
-    this.fillAhead(width);
-    this.lastRandomIndex = undefined;
+    this.fillAhead(width); // en dernier
   }
 
   fillAhead(width) {
     while (this.cursorX < width + 1300) {
       const sequence = this.pickSequence();
-      if (!sequence) return;
-      this.spawnSequence(sequence, this.cursorX);
-      this.cursorX += sequence.length + SEQUENCE_GAP;
+      const extra = this.spawnSequence(sequence, this.cursorX);
+      this.cursorX += sequence.length + extra + SEQUENCE_GAP;
     }
   }
 
   pickSequence() {
-    const list = SEQUENCES_BY_THEME[this.scene.currentTheme.id];
-    if (!Array.isArray(list) || list.length === 0) {
-      console.warn(
-        `No course sequences configured for theme "${this.scene.currentTheme.id}".`
-      );
-      return undefined;
-    }
+    const list = SEQUENCES_BY_THEME[this.spawnThemeId];
     if (this.sequenceIndex < list.length) return list[this.sequenceIndex++];
     let index = this.scene.rng.between(0, list.length - 1);
     if (index === this.lastRandomIndex) index = (index + 1) % list.length;
@@ -79,22 +76,35 @@ export default class RunnerCourse {
   }
 
   spawnSequence(sequence, startX) {
-    if (!sequence?.elements) return;
+    const hazardXs = sequence.elements
+      .filter((e) => e.role === "hazard")
+      .map((e) => e.x);
+    const firstX = hazardXs.length ? Math.min(...hazardXs) : 0;
+    const lastX = hazardXs.length ? Math.max(...hazardXs) : 0;
+
     sequence.elements.forEach((definition) => {
-      if (definition.role === "hazard") this.spawnHazard(definition, startX);
-      else if (definition.role === "platform")
+      if (definition.role === "hazard") {
+        // le premier obstacle reste en place, les suivants sont repoussés
+        const stretch = (definition.x - firstX) * (HAZARD_SPACING - 1);
+        this.spawnHazard(definition, startX, stretch);
+      } else if (definition.role === "platform") {
         this.spawnPlatform(definition, startX);
-      else this.spawnDecoration(definition, startX);
+      } else {
+        this.spawnDecoration(definition, startX);
+      }
     });
+
+    // la séquence s'allonge d'autant, pour ne pas chevaucher la suivante
+    return (lastX - firstX) * (HAZARD_SPACING - 1);
   }
 
-  spawnHazard(definition, startX) {
+  spawnHazard(definition, startX, stretch = 0) {
     const hazard = this.hazards.getFirstDead(false);
     if (!hazard) return;
     hazard.setTexture(definition.texture).setOrigin(0.5, 1);
     hazard.enableBody(
       true,
-      startX + definition.x + HAZARD_X_OFFSET + (definition.dx ?? 0),
+      startX + definition.x + HAZARD_X_OFFSET + (definition.dx ?? 0) + stretch,
       this.groundY,
       true,
       true
@@ -150,6 +160,7 @@ export default class RunnerCourse {
     const movement = speed * deltaSeconds;
     this.elapsed += deltaSeconds;
     this.cursorX -= movement;
+    if (this.themeBoundary !== null) this.themeBoundary -= movement;
 
     this.hazards.getChildren().forEach((hazard) => {
       if (!hazard.active) return;
@@ -197,6 +208,28 @@ export default class RunnerCourse {
     this.decorations.getChildren().forEach((item) => {
       if (item.active) item.y = groundY;
     });
+  }
+
+  queueTheme(themeId) {
+    this.spawnThemeId = themeId;
+    this.sequenceIndex = 0;
+    this.lastRandomIndex = undefined;
+    this.themeBoundary = this.cursorX; // fin de l'ancien thème
+
+    // Zone vide : au moment du changement de fond, le premier élément du nouveau
+    // thème est juste hors écran, à droite.
+    const { scale, playerX } = this.scene;
+    this.cursorX += scale.width - playerX + TRANSITION_MARGIN;
+  }
+
+  // true quand toutes les séquences du thème (hors tirage aléatoire) ont été générées
+  allSequencesSpawned() {
+    return this.sequenceIndex >= SEQUENCES_BY_THEME[this.spawnThemeId].length;
+  }
+
+  // true quand tout l'ancien thème est passé derrière le joueur
+  themeReached(playerX) {
+    return this.themeBoundary !== null && this.themeBoundary <= playerX;
   }
 
   stop() {
