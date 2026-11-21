@@ -116,6 +116,7 @@ export default class Startup extends Phaser.Scene {
     this.createButton(["TRAVEL", "Movement"], 1);
     this.createButton(["ALGO", "ProgrammingLabScene"], 2);
     this.createButton(["ALGO", "ProgrammingLabScene"], 3);
+    this.createButton(["BLOCS", "SquareBlocksScene"], 4);
 
     this.keyboardMenu = createKeyboardMenu(this, {
       getButtons: () => this.buttons,
@@ -292,7 +293,11 @@ export default class Startup extends Phaser.Scene {
 
     button.activate = () => {
       this.clickSong.play();
-      if (["Movement", "ProgrammingLabScene"].includes(button.message))
+      if (
+        ["Movement", "ProgrammingLabScene", "SquareBlocksScene"].includes(
+          button.message
+        )
+      )
         this.scene.start(button.message);
     };
     button.on("pointerup", () => {

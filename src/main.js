@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import Startup from "./scenes/startup";
 import MovementScene from "./scenes/MovementScene";
 import ProgrammingLabScene from "./scenes/ProgrammingLabScene";
+import SquareBlocksScene from "./scenes/SquareBlocksScene";
 
 const movementTestRequested =
   new URLSearchParams(window.location.search).get("scene") === "movement";
@@ -23,8 +24,8 @@ const config = {
     },
   },
   scene: movementTestRequested
-    ? [MovementScene, Startup, ProgrammingLabScene]
-    : [Startup, MovementScene, ProgrammingLabScene],
+    ? [MovementScene, Startup, ProgrammingLabScene, SquareBlocksScene]
+    : [Startup, MovementScene, ProgrammingLabScene, SquareBlocksScene],
 };
 
 new Phaser.Game(config);
