@@ -164,7 +164,7 @@ const NEW_YORK = [
     { role: "decor", texture: "city-lamp", x: 150 },
     { role: "hazard", texture: "ny-taxi", x: 340 },
     { role: "decor", texture: "ny-building", x: 560 },
-    { role: "hazard", texture: "ny-cart", x: 800 },
+    { role: "hazard", texture: "ny-cart", x: 1800 },
     { role: "decor", texture: "city-lamp", x: 980 },
   ] },
   { name: "auvents", length: 1100, elements: [
@@ -175,7 +175,7 @@ const NEW_YORK = [
     { role: "hazard", texture: "ny-hydrant", x: 600 },
     { role: "decor", texture: "ny-building", x: 700 },
     { role: "platform", texture: "ny-awning", x: 705, height: 90 },
-    { role: "hazard", texture: "ny-taxi", x: 960 },
+    { role: "hazard", texture: "ny-taxi", x: 1560 },
   ] },
   highRoute({ decor: "ny-building", ledge: "ny-fireescape", hazard: "ny-taxi" }),
 ];

@@ -363,7 +363,7 @@ export default class MovementScene extends Phaser.Scene {
 
     const seconds = Math.min(delta, 50) / 1000;
     this.runTime += seconds;
-    this.scrollSpeed = Math.min(MAX_SPEED, BASE_SPEED + this.runTime * 4);
+    this.scrollSpeed = Math.min(MAX_SPEED, BASE_SPEED + this.runTime * 3);
     this.distance += this.scrollSpeed * seconds;
     this.background.tilePositionX += this.scrollSpeed * seconds * 0.035;
     this.distantPlants.tilePositionX += this.scrollSpeed * seconds * 0.18;
