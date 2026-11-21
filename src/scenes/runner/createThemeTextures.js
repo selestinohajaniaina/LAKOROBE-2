@@ -226,11 +226,187 @@ function washington(s) {
   });
 }
 
+const palmTree = (s, key, c) =>
+  make(s, key, 130, 230, (g) => {
+    g.fillStyle(c.trunk).fillRect(60, 64, 12, 166);
+    g.fillStyle(c.ring);
+    for (let y = 84; y < 224; y += 22) g.fillRect(60, y, 12, 3);
+    g.fillStyle(c.frond);
+    g.fillTriangle(66, 58, 2, 78, 36, 40).fillTriangle(66, 58, 128, 78, 96, 40);
+    g.fillTriangle(66, 58, 8, 104, 28, 66).fillTriangle(66, 58, 124, 104, 104, 66);
+    g.fillTriangle(66, 58, 54, 6, 78, 6);
+    g.fillStyle(c.tip).fillTriangle(66, 58, 40, 36, 58, 56).fillTriangle(66, 58, 92, 36, 74, 56);
+    g.fillStyle(c.ring).fillCircle(60, 64, 5).fillCircle(72, 64, 5);
+  });
+
+function beach(s) {
+  palmTree(s, "beach-palm", { trunk: 0x3a2a2a, ring: 0x5a3a3a, frond: 0x6b7a2a, tip: 0xc0392b });
+  make(s, "beach-convertible", 112, 48, (g) => {
+    g.fillStyle(0x2aa6d6).fillRoundedRect(4, 22, 104, 18, 6).fillRoundedRect(14, 14, 60, 12, 5);
+    g.fillStyle(0xf5e6c8).fillRect(36, 10, 30, 14);
+    g.fillStyle(0x9fe0f5).fillTriangle(70, 24, 78, 8, 82, 24);
+    g.fillStyle(0xdddddd).fillRect(100, 30, 10, 6).fillRect(0, 30, 8, 6);
+    g.fillStyle(0xf2f2f2).fillRect(10, 30, 90, 2);
+    wheel(g, 28, 40);
+    wheel(g, 86, 40);
+  });
+  make(s, "beach-flamingo", 36, 70, (g) => {
+    g.fillStyle(0xe8527f).fillRect(12, 48, 2, 22).fillRect(20, 48, 2, 22);
+    g.fillStyle(0xff6fa5).fillCircle(16, 38, 13).fillRoundedRect(22, 10, 6, 28, 3).fillCircle(26, 10, 6);
+    g.fillStyle(0xffb3cf).fillCircle(12, 36, 6);
+    g.fillStyle(0x222222).fillTriangle(30, 8, 36, 12, 30, 14);
+  });
+  make(s, "beach-surf", 50, 64, (g) => {
+    g.fillStyle(0xffd23f).fillRoundedRect(8, 2, 16, 62, 8);
+    g.fillStyle(0x2ec4b6).fillRoundedRect(26, 8, 16, 56, 8);
+    g.fillStyle(0xffffff).fillRect(14, 10, 4, 40).fillRect(32, 16, 4, 34);
+    g.fillStyle(0x6b4a2a).fillRect(2, 52, 46, 6);
+  });
+  make(s, "beach-hotel", 170, 240, (g) => {
+    g.fillStyle(0xe9e4f2).fillRect(20, 30, 130, 210);
+    g.fillStyle(0x4fa8e8).fillRect(70, 0, 30, 240);
+    g.fillStyle(0xff6fa5).fillRect(20, 30, 130, 8);
+    g.fillStyle(0x2b4fa0);
+    for (let y = 50; y < 220; y += 30) {
+      g.fillRect(32, y, 22, 16).fillRect(116, y, 22, 16);
+      g.fillStyle(0xffffff).fillRect(78, y, 4, 16).fillRect(88, y, 4, 16);
+      g.fillStyle(0x2b4fa0);
+    }
+    g.fillStyle(0xffffff).fillCircle(78, 14, 4).fillCircle(92, 14, 4);
+    g.fillStyle(0x2a2a4a).fillRect(66, 204, 38, 36);
+  });
+  make(s, "beach-umbrella", 90, 80, (g) => {
+    g.fillStyle(0x6b4a2a).fillRect(44, 6, 3, 74);
+    g.fillStyle(0xff6fa5).fillTriangle(45, 4, 2, 36, 88, 36);
+    g.fillStyle(0xffffff).fillTriangle(45, 4, 28, 36, 60, 36);
+    g.fillStyle(0x2ec4b6).fillTriangle(45, 4, 2, 36, 18, 36).fillTriangle(45, 4, 72, 36, 88, 36);
+  });
+  make(s, "beach-awning", 190, 26, (g) => {
+    for (let i = 0; i < 10; i += 1)
+      g.fillStyle(i % 2 ? 0xf4f1e8 : 0x2ec4b6).fillRect(i * 19, 0, 19, 16);
+    g.fillStyle(0x2ec4b6);
+    for (let i = 0; i < 10; i += 2) g.fillTriangle(i * 19, 16, i * 19 + 19, 16, i * 19 + 9, 26);
+  });
+  make(s, "beach-balcony", 190, 24, (g) => {
+    g.fillStyle(0xff8fb8).fillRoundedRect(0, 0, 190, 20, 4);
+    g.fillStyle(0xffd1e3).fillRect(4, 0, 182, 7);
+    g.fillStyle(0x4fa8e8);
+    for (let x = 14; x < 180; x += 30) g.fillRect(x, 11, 14, 5);
+  });
+}
+
+function sunset(s) {
+  palmTree(s, "sunset-palm", { trunk: 0x2d0a24, ring: 0x4a1a3a, frond: 0x3a0f2e, tip: 0x5a1a44 });
+  make(s, "sunset-house", 160, 150, (g) => {
+    g.fillStyle(0x8b7fd0).fillRect(20, 66, 120, 84);
+    g.fillStyle(0x1f5f6b).fillTriangle(8, 68, 80, 8, 152, 68);
+    g.fillStyle(0xc9c0f0).fillRect(34, 86, 92, 6);
+    g.fillStyle(0xffb347).fillRect(34, 98, 20, 22).fillRect(106, 98, 20, 22);
+    g.fillStyle(0xffffff).fillRect(30, 124, 100, 4);
+    for (let x = 32; x < 130; x += 10) g.fillRect(x, 124, 2, 12);
+    g.fillStyle(0x7a1f2a).fillRect(66, 100, 28, 50);
+    g.fillStyle(0xffb347).fillRect(72, 50, 16, 16);
+  });
+  make(s, "sunset-hotel", 110, 210, (g) => {
+    g.fillStyle(0x7a6ab0).fillRect(14, 40, 86, 170);
+    g.fillStyle(0xc9c0f0).fillRect(10, 36, 94, 8).fillRect(10, 110, 94, 5);
+    g.fillStyle(0x5a4a90).fillTriangle(14, 40, 57, 4, 100, 40);
+    g.fillStyle(0xffb347);
+    for (let y = 56; y < 190; y += 34)
+      for (let x = 24; x < 90; x += 22) g.fillRect(x, y, 12, 18);
+    g.fillStyle(0xf5f0e6).fillRect(2, 60, 8, 60);
+    g.fillStyle(0x7a1f2a).fillRect(44, 180, 26, 30);
+  });
+  make(s, "sunset-truck", 120, 66, (g) => {
+    g.fillStyle(0xf5f0e6).fillRoundedRect(4, 12, 100, 40, 6);
+    g.fillStyle(0xd1d9e0).fillRoundedRect(84, 22, 32, 30, 5);
+    g.fillStyle(0x2ec4b6).fillRect(4, 38, 100, 6);
+    g.fillStyle(0x8fd3ee).fillRect(90, 26, 20, 12);
+    g.fillStyle(0x333333).fillRect(18, 20, 52, 14);
+    for (let i = 0; i < 6; i += 1)
+      g.fillStyle(i % 2 ? 0xffffff : 0xd62828).fillRect(14 + i * 10, 14, 10, 6);
+    wheel(g, 28, 58);
+    wheel(g, 92, 58);
+  });
+  make(s, "sunset-mailbox", 30, 48, (g) => {
+    g.fillStyle(0x4d4d4d).fillRect(11, 28, 8, 20).fillRect(6, 44, 18, 4);
+    g.fillStyle(0x2a4fa0).fillRoundedRect(2, 4, 26, 26, 10).fillRect(2, 18, 26, 12);
+    g.fillStyle(0xd62828).fillRect(26, 6, 3, 12).fillRect(26, 6, 6, 4);
+    g.fillStyle(0xffffff).fillRect(8, 20, 14, 3);
+  });
+  make(s, "sunset-bike", 70, 46, (g) => {
+    g.lineStyle(3, 0x222222).strokeCircle(14, 32, 12).strokeCircle(56, 32, 12);
+    g.lineStyle(3, 0xd62828)
+      .lineBetween(14, 32, 30, 14).lineBetween(30, 14, 50, 14)
+      .lineBetween(50, 14, 56, 32).lineBetween(30, 14, 36, 32).lineBetween(14, 32, 36, 32);
+    g.lineStyle(3, 0x222222).lineBetween(26, 10, 36, 10).lineBetween(50, 14, 48, 6);
+  });
+  make(s, "sunset-balcony", 190, 24, (g) => {
+    g.fillStyle(0xf5f0e6).fillRect(0, 0, 190, 6);
+    g.fillStyle(0xe0d6c4).fillRect(0, 6, 190, 3);
+    g.fillStyle(0xf5f0e6);
+    for (let x = 6; x < 190; x += 14) g.fillRect(x, 9, 4, 15);
+  });
+}
+
+function losAngeles(s) {
+  make(s, "la-palm", 80, 260, (g) => {
+    g.fillStyle(0x7a1f4d).fillRect(38, 44, 5, 216);
+    for (let a = 0; a < Math.PI * 2; a += Math.PI / 7) {
+      g.fillTriangle(
+        40, 44,
+        40 + Math.cos(a - 0.12) * 36, 44 + Math.sin(a - 0.12) * 30,
+        40 + Math.cos(a + 0.12) * 36, 44 + Math.sin(a + 0.12) * 30
+      );
+    }
+    g.fillCircle(40, 44, 5);
+  });
+  make(s, "la-tower", 100, 250, (g) => {
+    g.fillStyle(0xf2a07a).fillRect(20, 60, 60, 190).fillRect(32, 20, 36, 50).fillRect(44, 0, 12, 24);
+    g.fillStyle(0xd9825e).fillRect(20, 60, 10, 190);
+    g.fillStyle(0xffd2a8);
+    for (let y = 80; y < 240; y += 22) g.fillRect(40, y, 8, 10).fillRect(56, y, 8, 10);
+  });
+  make(s, "la-lamp", 70, 150, (g) => {
+    g.fillStyle(0xfff0a0, 0.35).fillTriangle(47, 25, 28, 150, 66, 150);
+    g.fillStyle(0x7a1f4d).fillRect(8, 16, 4, 134).fillRect(8, 16, 40, 4).fillRect(3, 140, 14, 10);
+    g.fillStyle(0xffe27a).fillRect(40, 20, 14, 5);
+  });
+  make(s, "la-lowrider", 112, 46, (g) => {
+    g.fillStyle(0xd1306f).fillRoundedRect(4, 22, 104, 16, 6).fillRoundedRect(26, 8, 56, 18, 7);
+    g.fillStyle(0xfce4a0).fillRect(32, 12, 22, 11).fillRect(58, 12, 20, 11);
+    g.fillStyle(0xffd23f).fillRect(4, 30, 104, 2);
+    g.fillStyle(0x7a1f4d).fillRect(8, 26, 96, 3);
+    g.fillStyle(0x1c1c1c).fillCircle(28, 38, 8).fillCircle(86, 38, 8);
+    g.fillStyle(0xffd23f).fillCircle(28, 38, 4).fillCircle(86, 38, 4);
+  });
+  make(s, "la-barrier", 84, 44, (g) => {
+    g.fillStyle(0xc4b0c8).fillRoundedRect(4, 0, 76, 44, 8).fillRect(0, 36, 84, 8);
+    g.fillStyle(0xf26b21).fillRect(16, 10, 14, 8).fillRect(54, 10, 14, 8);
+    g.fillStyle(0xe8dced).fillRect(8, 4, 68, 3);
+  });
+  make(s, "la-skate", 60, 34, (g) => {
+    g.fillStyle(0xb0a0b8).fillTriangle(2, 34, 58, 34, 58, 2);
+    g.fillStyle(0x8a7a92).fillTriangle(12, 34, 58, 34, 58, 14);
+    g.fillStyle(0xd0d0d8).fillRect(54, 0, 6, 34);
+    g.fillStyle(0xff6fa5).fillRect(30, 28, 22, 3);
+  });
+  make(s, "la-ledge", 190, 24, (g) => {
+    g.fillStyle(0xc2427f).fillRoundedRect(0, 0, 190, 20, 4);
+    g.fillStyle(0xe0699f).fillRect(4, 0, 182, 7);
+    g.fillStyle(0x7a1f4d);
+    for (let x = 8; x < 190; x += 16) g.fillRect(x, 10, 3, 10);
+  });
+}
+
 export default function createThemeTextures(scene) {
   desert(scene);
   snow(scene);
   newYork(scene);
   washington(scene);
+  beach(scene);
+  sunset(scene);
+  losAngeles(scene);
   make(scene, "city-lamp", 26, 150, (g) => {
     g.fillStyle(0x2d3a2f).fillRect(11, 20, 4, 130).fillRect(7, 140, 12, 10).fillRect(11, 16, 14, 3);
     g.fillStyle(0xffe9a0).fillRoundedRect(16, 14, 10, 8, 2);

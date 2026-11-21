@@ -97,115 +97,299 @@ const highRoute = ({ decor, ledge, hazard }) => ({
 });
 
 const DESERT = [
-  { name: "oasis", length: 950, elements: [
-    { role: "decor", texture: "desert-tent", x: 200 },
-    { role: "decor", texture: "desert-palm", x: 520 },
-    { role: "hazard", texture: "desert-cactus", x: 860 },
-    { role: "decor", texture: "desert-bush", x: 960 },
-    { role: "hazard", texture: "desert-rock", x: 980 },
-  ] },
-  { name: "caravane", length: 1100, elements: [
-    { role: "decor", texture: "desert-palm", x: 160 },
-    { role: "decor", texture: "desert-bush", x: 300 },
-    { role: "hazard", texture: "desert-camel", x: 480 },
-    { role: "decor", texture: "desert-tent", x: 720 },
-    { role: "hazard", texture: "desert-cactus", x: 1080 },
-  ] },
-  { name: "palmes-et-dalles", length: 1100, elements: [
-    { role: "decor", texture: "desert-palm", x: 180 },
-    { role: "platform", texture: "desert-ledge", x: 185, height: 90 },
-    { role: "platform", texture: "desert-ledge", x: 345, height: 90 },
-    { role: "decor", texture: "desert-palm", x: 440 },
-    { role: "hazard", texture: "desert-rock", x: 620 },
-    { role: "decor", texture: "desert-palm", x: 700 },
-    { role: "platform", texture: "desert-ledge", x: 705, height: 90 },
-    { role: "hazard", texture: "desert-cactus", x: 1080 },
-  ] },
-  highRoute({ decor: "desert-palm", ledge: "desert-ledge", hazard: "desert-camel" }),
+  {
+    name: "oasis",
+    length: 950,
+    elements: [
+      { role: "decor", texture: "desert-tent", x: 200 },
+      { role: "decor", texture: "desert-palm", x: 520 },
+      { role: "hazard", texture: "desert-cactus", x: 860 },
+      { role: "decor", texture: "desert-bush", x: 960 },
+      { role: "hazard", texture: "desert-rock", x: 980 },
+    ],
+  },
+  {
+    name: "caravane",
+    length: 1100,
+    elements: [
+      { role: "decor", texture: "desert-palm", x: 160 },
+      { role: "decor", texture: "desert-bush", x: 300 },
+      { role: "hazard", texture: "desert-camel", x: 480 },
+      { role: "decor", texture: "desert-tent", x: 720 },
+      { role: "hazard", texture: "desert-cactus", x: 1080 },
+    ],
+  },
+  {
+    name: "palmes-et-dalles",
+    length: 1100,
+    elements: [
+      { role: "decor", texture: "desert-palm", x: 180 },
+      { role: "platform", texture: "desert-ledge", x: 185, height: 90 },
+      { role: "platform", texture: "desert-ledge", x: 345, height: 90 },
+      { role: "decor", texture: "desert-palm", x: 440 },
+      { role: "hazard", texture: "desert-rock", x: 620 },
+      { role: "decor", texture: "desert-palm", x: 700 },
+      { role: "platform", texture: "desert-ledge", x: 705, height: 90 },
+      { role: "hazard", texture: "desert-cactus", x: 1080 },
+    ],
+  },
+  highRoute({
+    decor: "desert-palm",
+    ledge: "desert-ledge",
+    hazard: "desert-camel",
+  }),
 ];
 
 const SNOW = [
-  { name: "foret-enneigee", length: 950, elements: [
-    { role: "decor", texture: "snow-pine", x: 200 },
-    { role: "decor", texture: "snow-snowman", x: 400 },
-    { role: "hazard", texture: "snow-rock", x: 560 },
-    { role: "decor", texture: "snow-pine", x: 760 },
-    { role: "hazard", texture: "snow-spikes", x: 1080 },
-  ] },
-  { name: "village-inuit", length: 1100, elements: [
-    { role: "decor", texture: "snow-igloo", x: 220 },
-    { role: "hazard", texture: "snow-husky", x: 420 },
-    { role: "decor", texture: "snow-pine", x: 650 },
-    { role: "hazard", texture: "snow-spikes", x: 1020 },
-    { role: "decor", texture: "snow-snowman", x: 980 },
-  ] },
-  { name: "pins-et-glace", length: 1100, elements: [
-    { role: "decor", texture: "snow-pine", x: 180 },
-    { role: "platform", texture: "snow-ledge", x: 185, height: 90 },
-    { role: "platform", texture: "snow-ledge", x: 345, height: 90 },
-    { role: "decor", texture: "snow-pine", x: 440 },
-    { role: "hazard", texture: "snow-rock", x: 640 },
-    { role: "decor", texture: "snow-pine", x: 700 },
-    { role: "platform", texture: "snow-ledge", x: 705, height: 90 },
-    { role: "hazard", texture: "snow-spikes", x: 1060 },
-  ] },
+  {
+    name: "foret-enneigee",
+    length: 950,
+    elements: [
+      { role: "decor", texture: "snow-pine", x: 200 },
+      { role: "decor", texture: "snow-snowman", x: 400 },
+      { role: "hazard", texture: "snow-rock", x: 560 },
+      { role: "decor", texture: "snow-pine", x: 760 },
+      { role: "hazard", texture: "snow-spikes", x: 1080 },
+    ],
+  },
+  {
+    name: "village-inuit",
+    length: 1100,
+    elements: [
+      { role: "decor", texture: "snow-igloo", x: 220 },
+      { role: "hazard", texture: "snow-husky", x: 420 },
+      { role: "decor", texture: "snow-pine", x: 650 },
+      { role: "hazard", texture: "snow-spikes", x: 1020 },
+      { role: "decor", texture: "snow-snowman", x: 980 },
+    ],
+  },
+  {
+    name: "pins-et-glace",
+    length: 1100,
+    elements: [
+      { role: "decor", texture: "snow-pine", x: 180 },
+      { role: "platform", texture: "snow-ledge", x: 185, height: 90 },
+      { role: "platform", texture: "snow-ledge", x: 345, height: 90 },
+      { role: "decor", texture: "snow-pine", x: 440 },
+      { role: "hazard", texture: "snow-rock", x: 640 },
+      { role: "decor", texture: "snow-pine", x: 700 },
+      { role: "platform", texture: "snow-ledge", x: 705, height: 90 },
+      { role: "hazard", texture: "snow-spikes", x: 1060 },
+    ],
+  },
   highRoute({ decor: "snow-pine", ledge: "snow-ledge", hazard: "snow-husky" }),
 ];
 
 const NEW_YORK = [
-  { name: "rue-commercante", length: 950, elements: [
-    { role: "decor", texture: "ny-building", x: 200 },
-    { role: "decor", texture: "city-lamp", x: 400 },
-    { role: "hazard", texture: "ny-hydrant", x: 540 },
-    { role: "decor", texture: "ny-tower", x: 700 },
-    { role: "hazard", texture: "ny-trash", x: 880 },
-  ] },
-  { name: "embouteillage", length: 1150, elements: [
-    { role: "decor", texture: "city-lamp", x: 150 },
-    { role: "hazard", texture: "ny-taxi", x: 340 },
-    { role: "decor", texture: "ny-building", x: 560 },
-    { role: "hazard", texture: "ny-cart", x: 1800 },
-    { role: "decor", texture: "city-lamp", x: 980 },
-  ] },
-  { name: "auvents", length: 1100, elements: [
-    { role: "decor", texture: "ny-building", x: 180 },
-    { role: "platform", texture: "ny-awning", x: 185, height: 90 },
-    { role: "platform", texture: "ny-awning", x: 345, height: 90 },
-    { role: "decor", texture: "ny-tower", x: 440 },
-    { role: "hazard", texture: "ny-hydrant", x: 600 },
-    { role: "decor", texture: "ny-building", x: 700 },
-    { role: "platform", texture: "ny-awning", x: 705, height: 90 },
-    { role: "hazard", texture: "ny-taxi", x: 1560 },
-  ] },
-  highRoute({ decor: "ny-building", ledge: "ny-fireescape", hazard: "ny-taxi" }),
+  {
+    name: "rue-commercante",
+    length: 950,
+    elements: [
+      { role: "decor", texture: "ny-building", x: 200 },
+      { role: "decor", texture: "city-lamp", x: 400 },
+      { role: "hazard", texture: "ny-hydrant", x: 540 },
+      { role: "decor", texture: "ny-tower", x: 700 },
+      { role: "hazard", texture: "ny-trash", x: 880 },
+    ],
+  },
+  {
+    name: "embouteillage",
+    length: 1150,
+    elements: [
+      { role: "decor", texture: "city-lamp", x: 150 },
+      { role: "hazard", texture: "ny-taxi", x: 340 },
+      { role: "decor", texture: "ny-building", x: 560 },
+      { role: "hazard", texture: "ny-cart", x: 1800 },
+      { role: "decor", texture: "city-lamp", x: 980 },
+    ],
+  },
+  {
+    name: "auvents",
+    length: 1100,
+    elements: [
+      { role: "decor", texture: "ny-building", x: 180 },
+      { role: "platform", texture: "ny-awning", x: 185, height: 90 },
+      { role: "platform", texture: "ny-awning", x: 345, height: 90 },
+      { role: "decor", texture: "ny-tower", x: 440 },
+      { role: "hazard", texture: "ny-hydrant", x: 600 },
+      { role: "decor", texture: "ny-building", x: 700 },
+      { role: "platform", texture: "ny-awning", x: 705, height: 90 },
+      { role: "hazard", texture: "ny-taxi", x: 1560 },
+    ],
+  },
+  highRoute({
+    decor: "ny-building",
+    ledge: "ny-fireescape",
+    hazard: "ny-taxi",
+  }),
 ];
 
 const WASHINGTON = [
-  { name: "national-mall", length: 1000, elements: [
-    { role: "decor", texture: "city-lamp", x: 180 },
-    { role: "decor", texture: "dc-flag", x: 330 },
-    { role: "hazard", texture: "dc-cone", x: 480 },
-    { role: "decor", texture: "dc-obelisk", x: 700 },
-    { role: "hazard", texture: "dc-bench", x: 900 },
-  ] },
-  { name: "pennsylvania-avenue", length: 1150, elements: [
-    { role: "decor", texture: "dc-columns", x: 220 },
-    { role: "hazard", texture: "dc-police", x: 400 },
-    { role: "decor", texture: "city-lamp", x: 620 },
-    { role: "hazard", texture: "dc-barrier", x: 860 },
-    { role: "decor", texture: "dc-flag", x: 1000 },
-  ] },
-  { name: "capitole", length: 1100, elements: [
-    { role: "decor", texture: "dc-dome", x: 180 },
-    { role: "platform", texture: "dc-slab", x: 185, height: 90 },
-    { role: "platform", texture: "dc-slab", x: 345, height: 90 },
-    { role: "decor", texture: "dc-flag", x: 440 },
-    { role: "hazard", texture: "dc-barrier", x: 620 },
-    { role: "decor", texture: "dc-columns", x: 700 },
-    { role: "platform", texture: "dc-slab", x: 705, height: 90 },
-    { role: "hazard", texture: "dc-police", x: 960 },
-  ] },
+  {
+    name: "national-mall",
+    length: 1000,
+    elements: [
+      { role: "decor", texture: "city-lamp", x: 180 },
+      { role: "decor", texture: "dc-flag", x: 330 },
+      { role: "hazard", texture: "dc-cone", x: 480 },
+      { role: "decor", texture: "dc-obelisk", x: 700 },
+      { role: "hazard", texture: "dc-bench", x: 900 },
+    ],
+  },
+  {
+    name: "pennsylvania-avenue",
+    length: 1150,
+    elements: [
+      { role: "decor", texture: "dc-columns", x: 220 },
+      { role: "hazard", texture: "dc-police", x: 400 },
+      { role: "decor", texture: "city-lamp", x: 620 },
+      { role: "hazard", texture: "dc-barrier", x: 860 },
+      { role: "decor", texture: "dc-flag", x: 1000 },
+    ],
+  },
+  {
+    name: "capitole",
+    length: 1100,
+    elements: [
+      { role: "decor", texture: "dc-dome", x: 180 },
+      { role: "platform", texture: "dc-slab", x: 185, height: 90 },
+      { role: "platform", texture: "dc-slab", x: 345, height: 90 },
+      { role: "decor", texture: "dc-flag", x: 440 },
+      { role: "hazard", texture: "dc-barrier", x: 620 },
+      { role: "decor", texture: "dc-columns", x: 700 },
+      { role: "platform", texture: "dc-slab", x: 705, height: 90 },
+      { role: "hazard", texture: "dc-police", x: 960 },
+    ],
+  },
   highRoute({ decor: "dc-columns", ledge: "dc-slab", hazard: "dc-police" }),
+];
+
+const BEACH = [
+  {
+    name: "ocean-drive",
+    length: 1000,
+    elements: [
+      { role: "decor", texture: "beach-hotel", x: 200 },
+      { role: "decor", texture: "beach-palm", x: 420 },
+      { role: "hazard", texture: "beach-convertible", x: 560 },
+      { role: "decor", texture: "beach-umbrella", x: 780 },
+      { role: "hazard", texture: "beach-flamingo", x: 920 },
+    ],
+  },
+  {
+    name: "plage",
+    length: 1100,
+    elements: [
+      { role: "decor", texture: "beach-palm", x: 160 },
+      { role: "hazard", texture: "beach-surf", x: 340 },
+      { role: "decor", texture: "beach-umbrella", x: 560 },
+      { role: "hazard", texture: "beach-convertible", x: 800 },
+      { role: "decor", texture: "beach-palm", x: 1000 },
+    ],
+  },
+  {
+    name: "auvents-deco",
+    length: 1100,
+    elements: [
+      { role: "decor", texture: "beach-hotel", x: 180 },
+      { role: "platform", texture: "beach-awning", x: 185, height: 90 },
+      { role: "platform", texture: "beach-awning", x: 345, height: 90 },
+      { role: "decor", texture: "beach-palm", x: 440 },
+      { role: "hazard", texture: "beach-flamingo", x: 620 },
+      { role: "decor", texture: "beach-hotel", x: 700 },
+      { role: "platform", texture: "beach-awning", x: 705, height: 90 },
+      { role: "hazard", texture: "beach-surf", x: 960 },
+    ],
+  },
+  highRoute({
+    decor: "beach-palm",
+    ledge: "beach-balcony",
+    hazard: "beach-convertible",
+  }),
+];
+
+const SUNSET = [
+  {
+    name: "sunset-boulevard",
+    length: 1000,
+    elements: [
+      { role: "decor", texture: "sunset-house", x: 200 },
+      { role: "decor", texture: "city-lamp", x: 400 },
+      { role: "hazard", texture: "sunset-mailbox", x: 540 },
+      { role: "decor", texture: "sunset-hotel", x: 720 },
+      { role: "hazard", texture: "sunset-bike", x: 900 },
+    ],
+  },
+  {
+    name: "food-trucks",
+    length: 1150,
+    elements: [
+      { role: "decor", texture: "sunset-palm", x: 150 },
+      { role: "hazard", texture: "sunset-truck", x: 340 },
+      { role: "decor", texture: "sunset-house", x: 580 },
+      { role: "hazard", texture: "sunset-mailbox", x: 820 },
+      { role: "decor", texture: "city-lamp", x: 1000 },
+    ],
+  },
+  {
+    name: "balcons",
+    length: 1100,
+    elements: [
+      { role: "decor", texture: "sunset-house", x: 180 },
+      { role: "platform", texture: "sunset-balcony", x: 185, height: 90 },
+      { role: "platform", texture: "sunset-balcony", x: 345, height: 90 },
+      { role: "decor", texture: "sunset-hotel", x: 440 },
+      { role: "hazard", texture: "sunset-bike", x: 620 },
+      { role: "decor", texture: "sunset-palm", x: 700 },
+      { role: "platform", texture: "sunset-balcony", x: 705, height: 90 },
+      { role: "hazard", texture: "sunset-truck", x: 960 },
+    ],
+  },
+  highRoute({
+    decor: "sunset-palm",
+    ledge: "sunset-balcony",
+    hazard: "sunset-truck",
+  }),
+];
+
+const LOS_ANGELES = [
+  {
+    name: "freeway",
+    length: 1000,
+    elements: [
+      { role: "decor", texture: "la-lamp", x: 180 },
+      { role: "decor", texture: "la-palm", x: 330 },
+      { role: "hazard", texture: "la-barrier", x: 480 },
+      { role: "decor", texture: "la-tower", x: 700 },
+      { role: "hazard", texture: "la-skate", x: 900 },
+    ],
+  },
+  {
+    name: "boulevard-palmiers",
+    length: 1150,
+    elements: [
+      { role: "decor", texture: "la-palm", x: 150 },
+      { role: "hazard", texture: "la-lowrider", x: 340 },
+      { role: "decor", texture: "la-tower", x: 580 },
+      { role: "hazard", texture: "la-barrier", x: 820 },
+      { role: "decor", texture: "la-lamp", x: 1000 },
+    ],
+  },
+  {
+    name: "passerelles",
+    length: 1100,
+    elements: [
+      { role: "decor", texture: "la-palm", x: 180 },
+      { role: "platform", texture: "la-ledge", x: 185, height: 90 },
+      { role: "platform", texture: "la-ledge", x: 345, height: 90 },
+      { role: "decor", texture: "la-tower", x: 440 },
+      { role: "hazard", texture: "la-skate", x: 620 },
+      { role: "decor", texture: "la-palm", x: 700 },
+      { role: "platform", texture: "la-ledge", x: 705, height: 90 },
+      { role: "hazard", texture: "la-lowrider", x: 960 },
+    ],
+  },
+  highRoute({ decor: "la-palm", ledge: "la-ledge", hazard: "la-lowrider" }),
 ];
 
 export const SEQUENCES_BY_THEME = {
@@ -214,6 +398,9 @@ export const SEQUENCES_BY_THEME = {
   snow: SNOW,
   newyork: NEW_YORK,
   washington: WASHINGTON,
+  beach: BEACH,
+  sunset: SUNSET,
+  losangeles: LOS_ANGELES,
 };
 
 // [largeur, hauteur, offsetX, offsetY] : le bas de la hitbox colle au bas de la texture.
@@ -242,4 +429,16 @@ export const HITBOXES = {
   "dc-cone": [22, 36, 4, 4],
   "dc-bench": [68, 34, 4, 6],
   "dc-barrier": [76, 34, 4, 10],
+    // Ocean Drive
+  "beach-convertible": [84, 34, 14, 14],
+  "beach-flamingo": [26, 62, 5, 8],
+  "beach-surf": [42, 58, 4, 6],
+  // Sunset
+  "sunset-truck": [100, 48, 10, 18],
+  "sunset-mailbox": [24, 44, 3, 4],
+  "sunset-bike": [58, 40, 6, 6],
+  // Los Angeles
+  "la-lowrider": [84, 34, 14, 12],
+  "la-barrier": [76, 40, 4, 4],
+  "la-skate": [46, 26, 8, 8],
 };
