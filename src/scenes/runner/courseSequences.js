@@ -96,6 +96,78 @@ const highRoute = ({ decor, ledge, hazard }) => ({
   ],
 });
 
+// 4 séquences standard : rue, quartier, plateformes basses, route haute
+const standard = ({ decor: [d1, d2, d3], hazard: [h1, h2, h3], ledge }) => [
+  {
+    name: "rue",
+    length: 1000,
+    elements: [
+      { role: "decor", texture: d1, x: 200 },
+      { role: "decor", texture: d2, x: 400 },
+      { role: "hazard", texture: h1, x: 540 },
+      { role: "decor", texture: d3, x: 720 },
+      { role: "hazard", texture: h2, x: 900 },
+    ],
+  },
+  {
+    name: "quartier",
+    length: 1150,
+    elements: [
+      { role: "decor", texture: d2, x: 150 },
+      { role: "hazard", texture: h3, x: 340 },
+      { role: "decor", texture: d1, x: 580 },
+      { role: "hazard", texture: h1, x: 820 },
+      { role: "decor", texture: d3, x: 1000 },
+    ],
+  },
+  {
+    name: "plateformes",
+    length: 1100,
+    elements: [
+      { role: "decor", texture: d1, x: 180 },
+      { role: "platform", texture: ledge, x: 185, height: 90 },
+      { role: "platform", texture: ledge, x: 345, height: 90 },
+      { role: "decor", texture: d2, x: 440 },
+      { role: "hazard", texture: h2, x: 620 },
+      { role: "decor", texture: d3, x: 700 },
+      { role: "platform", texture: ledge, x: 705, height: 90 },
+      { role: "hazard", texture: h3, x: 960 },
+    ],
+  },
+  highRoute({ decor: d1, ledge, hazard: h3 }),
+];
+
+const BOSTON = standard({
+  decor: ["bo-brick", "bo-tree", "bo-tower"],
+  hazard: ["bo-lobster", "bo-cannon", "bo-taxi"],
+  ledge: "bo-ledge",
+});
+const MIAMI = standard({
+  decor: ["mi-hotel", "mi-palm", "mi-tower"],
+  hazard: ["mi-cooler", "mi-scooter", "mi-gator"],
+  ledge: "mi-ledge",
+});
+const TEXAS = standard({
+  decor: ["tx-saloon", "tx-saguaro", "tx-windmill"],
+  hazard: ["tx-barrel", "tx-tumble", "tx-bull"],
+  ledge: "tx-ledge",
+});
+const CHICAGO = standard({
+  decor: ["ch-willis", "ch-glass", "ch-hancock"],
+  hazard: ["ch-bike", "ch-cart", "ch-bean"],
+  ledge: "ch-ledge",
+});
+const VEGAS = standard({
+  decor: ["lv-sign", "lv-eiffel", "lv-wheel"],
+  hazard: ["lv-dice", "lv-slot", "lv-limo"],
+  ledge: "lv-ledge",
+});
+const SAN_FRANCISCO = standard({
+  decor: ["sf-victorian", "sf-tower", "sf-pyramid"],
+  hazard: ["sf-crab", "sf-sealion", "sf-cable"],
+  ledge: "sf-ledge",
+});
+
 const DESERT = [
   {
     name: "oasis",
@@ -401,6 +473,12 @@ export const SEQUENCES_BY_THEME = {
   beach: BEACH,
   sunset: SUNSET,
   losangeles: LOS_ANGELES,
+  boston: BOSTON,
+  miami: MIAMI,
+  texas: TEXAS,
+  chicago: CHICAGO,
+  vegas: VEGAS,
+  sanfrancisco: SAN_FRANCISCO,
 };
 
 // [largeur, hauteur, offsetX, offsetY] : le bas de la hitbox colle au bas de la texture.
@@ -441,4 +519,28 @@ export const HITBOXES = {
   "la-lowrider": [84, 34, 14, 12],
   "la-barrier": [76, 40, 4, 4],
   "la-skate": [46, 26, 8, 8],
+  // Boston
+  "bo-taxi": [80, 36, 14, 14],
+  "bo-cannon": [64, 32, 8, 12],
+  "bo-lobster": [40, 32, 4, 6],
+  // Miami
+  "mi-gator": [84, 24, 8, 10],
+  "mi-scooter": [48, 40, 8, 8],
+  "mi-cooler": [36, 32, 4, 6],
+  // Texas
+  "tx-bull": [76, 46, 10, 16],
+  "tx-barrel": [30, 38, 4, 6],
+  "tx-tumble": [34, 34, 5, 6],
+  // Chicago
+  "ch-bean": [76, 36, 7, 10],
+  "ch-cart": [70, 40, 10, 26],
+  "ch-bike": [58, 40, 6, 6],
+  // Las Vegas
+  "lv-slot": [34, 62, 5, 8],
+  "lv-limo": [92, 34, 14, 12],
+  "lv-dice": [36, 38, 4, 6],
+  // San Francisco
+  "sf-cable": [88, 48, 11, 14],
+  "sf-sealion": [66, 28, 7, 8],
+  "sf-crab": [42, 28, 5, 6],
 };
