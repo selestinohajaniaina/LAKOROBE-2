@@ -13,7 +13,6 @@ import { configureButtonInput } from "../ui/configureButtonInput.js";
 import { THEMES, themeForScore } from "./runner/themes";
 import createKeyboardMenu from "../ui/createKeyboardMenu.js";
 
-
 const BUTTON_HEIGHT = 50;
 const BUTTON_COUNT = 4;
 const SUPER_PIXEL_FAMILY = "SuperPixel";
@@ -46,6 +45,9 @@ const SHEETS = {
   run: personRunUrl,
   jump: personJumpUrl,
 };
+
+const MAX_LIVES = 3;
+const INVINCIBLE_MS = 1600; // durée d'invulnérabilité après un coup
 
 export default class MovementScene extends Phaser.Scene {
   constructor() {
@@ -231,6 +233,8 @@ export default class MovementScene extends Phaser.Scene {
         this.setButtonState(b, on ? "selected" : "normal"),
       activate: (b) => b.activate(),
     });
+
+    this.createHearts();
   }
 
   layout({ width, height }) {
@@ -251,11 +255,17 @@ export default class MovementScene extends Phaser.Scene {
     }
     this.messageText.setPosition(width / 2, Math.max(110, height * 0.32));
 
+    this.layoutHearts(width);
+
     this.layoutButtons({ width, height });
     this.layoutTexts({ width, height });
   }
 
   resetGame(startImmediately) {
+    this.lives = MAX_LIVES;
+    this.clearInvincibility();
+    this.updateHearts(false);
+
     this.cameras.main.resetFX();
     this.changingTheme = false;
     this.distance = 0;
@@ -323,8 +333,22 @@ export default class MovementScene extends Phaser.Scene {
   }
 
   handleObstacleCollision() {
-    if (this.state !== STATE.RUNNING) return;
+    if (this.state !== STATE.RUNNING || this.invincible) return;
+
+    this.lives -= 1;
+    this.updateHearts(true);
+    this.cameras.main.shake(150, 0.006);
+
+    if (this.lives > 0) {
+      this.obstacleSong.play();
+      this.startInvincibility();
+      return;
+    }
+
+    // Plus de vie : game over (code existant ci-dessous)
+    this.clearInvincibility();
     this.state = STATE.OVER;
+
     this.course.stop();
     this.player.setVelocityX(0);
     this.playPlayerAnimation("person-1-idle");
@@ -580,5 +604,73 @@ export default class MovementScene extends Phaser.Scene {
       cam.fadeIn(300, 255, 244, 194);
     });
     cam.fadeOut(300, 255, 244, 194);
+  }
+
+  createHearts() {
+    const makeHeart = (key, fill, stroke) => {
+      if (this.textures.exists(key)) return;
+      const g = this.make.graphics({ add: false });
+      g.fillStyle(stroke).fillCircle(10, 11, 9).fillCircle(24, 11, 9);
+      g.fillTriangle(1, 14, 33, 14, 17, 32);
+      g.fillStyle(fill).fillCircle(10, 11, 7).fillCircle(24, 11, 7);
+      g.fillTriangle(3, 14, 31, 14, 17, 29);
+      if (key === "heart-full") {
+        g.fillStyle(0xff9aa8).fillCircle(8, 8, 3);
+      }
+      g.generateTexture(key, 34, 34);
+      g.destroy();
+    };
+    makeHeart("heart-full", 0xe63946, 0x4a0f18);
+    makeHeart("heart-empty", 0x3b2a2e, 0x1c1215);
+
+    this.hearts = Array.from({ length: MAX_LIVES }, () =>
+      this.add.image(0, 0, "heart-full").setOrigin(1, 0).setDepth(20)
+    );
+  }
+
+  layoutHearts(width) {
+    this.hearts?.forEach((heart, i) =>
+      heart.setPosition(width - 20 - (MAX_LIVES - 1 - i) * 40, 16)
+    );
+  }
+
+  updateHearts(animateLoss = false) {
+    this.hearts?.forEach((heart, i) => {
+      const full = i < this.lives;
+      heart.setTexture(full ? "heart-full" : "heart-empty");
+      if (animateLoss && i === this.lives) {
+        this.tweens.add({
+          targets: heart,
+          scale: { from: 1.5, to: 1 },
+          duration: 250,
+          ease: "Back.Out",
+        });
+      }
+    });
+  }
+
+  startInvincibility() {
+    this.invincible = true;
+    this.blinkTween?.stop();
+    this.blinkTween = this.tweens.add({
+      targets: this.player,
+      alpha: 0.25,
+      yoyo: true,
+      repeat: -1,
+      duration: 90,
+    });
+    this.invincibleTimer?.remove();
+    this.invincibleTimer = this.time.delayedCall(INVINCIBLE_MS, () =>
+      this.clearInvincibility()
+    );
+  }
+
+  clearInvincibility() {
+    this.invincible = false;
+    this.blinkTween?.stop();
+    this.blinkTween = null;
+    this.invincibleTimer?.remove();
+    this.invincibleTimer = null;
+    this.player?.setAlpha(1);
   }
 }
