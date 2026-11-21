@@ -26,7 +26,6 @@ const SOFT_DROP_SCORE = 1; // par case entière parcourue avec ↓
 const HARD_DROP_SCORE = 2; // par case en chute immédiate
 const WRONG_FLASH_MS = 450;
 const DIGIT_COLOR = 0xfff0b5;
-const DEFAULT_BLOCK_COLOR = 0x3f7d32;
 const BLOCK_GAP = 1; // espace (px) de chaque côté d'un bloc : très serré
 
 // Chiffres 0-9 en pixels (3 x 5), dessinés avec le Graphics : pas de texte.
@@ -361,7 +360,10 @@ export default class SquareBlocksScene extends Phaser.Scene {
     const L = (this.layout = computeLayout(W, H, this.board.size));
 
     if (this.background) {
-      const s = Math.max(W / this.background.width, H / this.background.height);
+      const s = Math.max(
+        W / this.background.width,
+        H / this.background.height
+      );
       this.background.setPosition(W / 2, H / 2).setScale(s);
     }
 
@@ -437,13 +439,7 @@ export default class SquareBlocksScene extends Phaser.Scene {
     const o = 6; // débord du cadre
 
     g.fillStyle(COLORS.panel, 0.75);
-    g.fillRoundedRect(
-      zone.x - o,
-      zone.y - o,
-      zone.w + 2 * o,
-      zone.h + 2 * o,
-      14
-    );
+    g.fillRoundedRect(zone.x - o, zone.y - o, zone.w + 2 * o, zone.h + 2 * o, 14);
     g.fillStyle(COLORS.dropZone, 0.55);
     g.fillRect(drop.x, drop.y, drop.w, drop.h);
     g.fillStyle(COLORS.gridBg, 0.9);
@@ -488,7 +484,7 @@ export default class SquareBlocksScene extends Phaser.Scene {
             grid.y + r * cell + pad,
             cell - 2 * pad,
             b.color,
-            b.tile
+            this.label(b.tile)
           );
         }
       }
@@ -513,19 +509,13 @@ export default class SquareBlocksScene extends Phaser.Scene {
         zone.y + (cur.y + DROP_ROWS) * cell + pad,
         cell - 2 * pad,
         cur.color,
-        cur.tile
+        this.label(cur.tile)
       );
     }
 
     // Cadre et séparation espace libre / grille
     g.lineStyle(4, COLORS.border, 1);
-    g.strokeRoundedRect(
-      zone.x - o,
-      zone.y - o,
-      zone.w + 2 * o,
-      zone.h + 2 * o,
-      14
-    );
+    g.strokeRoundedRect(zone.x - o, zone.y - o, zone.w + 2 * o, zone.h + 2 * o, 14);
     g.lineStyle(2, COLORS.border, 0.6);
     g.lineBetween(grid.x, grid.y, grid.x + grid.w, grid.y);
   }
@@ -546,6 +536,11 @@ export default class SquareBlocksScene extends Phaser.Scene {
       r * 0.4
     );
     if (tile !== null && tile !== undefined) this.drawDigit(g, x, y, s, tile);
+  }
+
+  // Le numéro n'est affiché que pour les niveaux "chiffres" (niveau 1).
+  label(tile) {
+    return this.board.config?.digits ? tile : null;
   }
 
   // Dessine un chiffre (police pixel 3x5) centré dans un bloc de côté s.
@@ -593,7 +588,7 @@ export default class SquareBlocksScene extends Phaser.Scene {
       p.y + L.nextLabelH + (freeH - size) / 2,
       size,
       board.next.color,
-      board.next.tile
+      this.label(board.next.tile)
     );
   }
 
@@ -625,7 +620,6 @@ export default class SquareBlocksScene extends Phaser.Scene {
     const cs = side / n;
     const ox = a.x + (a.w - side) / 2;
     const oy = a.y + (a.h - side) / 2;
-    const color = this.board.config?.color ?? DEFAULT_BLOCK_COLOR;
     for (let r = 0; r < n; r++) {
       for (let c = 0; c < n; c++) {
         this.drawBlock(
@@ -633,8 +627,8 @@ export default class SquareBlocksScene extends Phaser.Scene {
           ox + c * cs + BLOCK_GAP,
           oy + r * cs + BLOCK_GAP,
           cs - 2 * BLOCK_GAP,
-          color,
-          target[r][c]
+          this.board.colorOf(target[r][c]),
+          this.label(target[r][c])
         );
       }
     }

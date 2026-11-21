@@ -8,15 +8,32 @@ export const GRID_BY_LEVEL = [2, 2, 3, 3, 4, 4, 5, 5, 6, 6];
 
 // Configuration des niveaux "image". Un niveau absent d'ici est libre :
 // blocs de couleurs aléatoires, sans image à copier.
-//  - color    : couleur (sombre) de tous les blocs du niveau
-//  - sequence : chiffres des blocs, dans l'ordre d'arrivée (boucle à la fin)
-//  - target   : l'image à copier, ligne par ligne (la ligne 0 est en haut).
-//               Un bloc posé au mauvais endroit est refusé et revient.
-// Niveau 1 : 0 et 1 arrivent d'abord et se posent en bas, puis 2 et 3 au-dessus.
+//  - target   : l'image à copier, ligne par ligne (la ligne 0 est en haut),
+//               en numéros de blocs. Un bloc posé au mauvais endroit est
+//               refusé et revient.
+//  - color    : couleur unique de tous les blocs (niveau 1, sombre)
+//  - palette  : une couleur par numéro de bloc (niveau 2)
+//  - digits   : true = le numéro est dessiné sur le bloc
+//  - sequence : ordre d'arrivée fixe des blocs (boucle à la fin)
+//  - order    : "bottom-up-shuffled" = ordre aléatoire, mais les blocs du bas
+//               d'abord (la gravité oblige à remplir de bas en haut, sinon
+//               un bloc pourrait ne jamais pouvoir être posé)
 export const LEVEL_CONFIG = {
+  // Niveau 1 : chiffres 0 à 3, blocs sombres, arrivée dans l'ordre 0, 1, 2, 3.
   1: {
     color: 0x3a4150,
+    digits: true,
     sequence: [0, 1, 2, 3],
+    target: [
+      [2, 3],
+      [0, 1],
+    ],
+  },
+  // Niveau 2 : 4 couleurs (rouge, bleu, jaune, vert), ordre mélangé.
+  2: {
+    palette: [0xd1495b, 0x4a90a4, 0xf2bd55, 0x3f7d32],
+    digits: false,
+    order: "bottom-up-shuffled",
     target: [
       [2, 3],
       [0, 1],
@@ -62,6 +79,7 @@ export class SquareBoard {
     this.rng = rng;
     this.nextId = 1;
     this.config = levelConfig(level);
+    this.sequence = this.buildSequence();
     this.seqIndex = 0;
     this.retry = null; // bloc refusé, à refaire tomber
     this.lastLock = null;
@@ -84,15 +102,42 @@ export class SquareBoard {
     return t;
   }
 
-  // `tile` = chiffre (ou plus tard morceau d'image) porté par le bloc.
+  // Ordre d'arrivée des blocs (numéros), ou null si le niveau est libre.
+  buildSequence() {
+    const cfg = this.config;
+    if (!cfg) return null;
+    if (cfg.sequence) return [...cfg.sequence];
+    const t = this.target;
+    if (cfg.order === "bottom-up-shuffled" && t) {
+      const seq = [];
+      for (let r = t.length - 1; r >= 0; r--) {
+        const row = [...t[r]];
+        for (let i = row.length - 1; i > 0; i--) {
+          const j = Math.floor(this.rng() * (i + 1));
+          [row[i], row[j]] = [row[j], row[i]];
+        }
+        seq.push(...row);
+      }
+      return seq;
+    }
+    return null;
+  }
+
+  // Couleur du bloc portant ce numéro.
+  colorOf(tile) {
+    const cfg = this.config;
+    if (cfg?.palette && tile !== null && tile !== undefined) {
+      return cfg.palette[tile % cfg.palette.length];
+    }
+    return cfg?.color ?? BLOCK_COLORS[0];
+  }
+
+  // `tile` = numéro du bloc (ou plus tard morceau d'image).
   createBlock() {
-    const seq = this.config?.sequence;
+    const seq = this.sequence;
     if (seq && seq.length > 0) {
-      return {
-        id: this.nextId++,
-        color: this.config.color,
-        tile: seq[this.seqIndex++ % seq.length],
-      };
+      const tile = seq[this.seqIndex++ % seq.length];
+      return { id: this.nextId++, color: this.colorOf(tile), tile };
     }
     return {
       id: this.nextId++,
