@@ -12,6 +12,13 @@ import RunnerCourse from "./runner/RunnerCourse";
 import { configureButtonInput } from "../ui/configureButtonInput.js";
 import { THEMES, THEME_STEP } from "./runner/themes";
 import createKeyboardMenu from "../ui/createKeyboardMenu.js";
+import {
+  CHARACTERS,
+  createCharacterTextures,
+  createCharacterAnimations,
+  loadCharacterIndex,
+  saveCharacterId,
+} from "./runner/characters";
 
 const BUTTON_HEIGHT = 50;
 const BUTTON_COUNT = 4;
@@ -74,8 +81,10 @@ export default class MovementScene extends Phaser.Scene {
   create() {
     this.rng = new Phaser.Math.RandomDataGenerator();
     this.createRunnerTextures();
+    createCharacterTextures(this);
     this.createEnvironment();
     this.createPlayerAnimations();
+    createCharacterAnimations(this);
     this.createPlayer();
     this.course = new RunnerCourse(this);
     this.createSounds();
@@ -182,10 +191,12 @@ export default class MovementScene extends Phaser.Scene {
   }
 
   createPlayer() {
-    this.player = this.physics.add.sprite(0, 0, "person-1-idle", 0);
-    this.player.setScale(PLAYER_SCALE).setDepth(6).setCollideWorldBounds(true);
-    this.player.body.setSize(210, 425).setOffset(151, 70);
+    this.characterIndex = loadCharacterIndex();
+    this.character = CHARACTERS[this.characterIndex];
+    this.player = this.physics.add.sprite(0, 0, this.character.texture, 0);
+    this.player.setDepth(6).setCollideWorldBounds(true);
     this.currentPlayerAnimation = null;
+    this.applyCharacter(this.characterIndex, false);
   }
 
   createControls() {
@@ -194,6 +205,8 @@ export default class MovementScene extends Phaser.Scene {
       jump: Phaser.Input.Keyboard.KeyCodes.SPACE,
       restart: Phaser.Input.Keyboard.KeyCodes.R,
       back: Phaser.Input.Keyboard.KeyCodes.ESC,
+      charPrev: Phaser.Input.Keyboard.KeyCodes.A,
+      charNext: Phaser.Input.Keyboard.KeyCodes.D,
     });
   }
 
@@ -240,6 +253,7 @@ export default class MovementScene extends Phaser.Scene {
     });
 
     this.createHearts();
+    this.createCharacterPicker();
   }
 
   layout({ width, height }) {
@@ -264,6 +278,8 @@ export default class MovementScene extends Phaser.Scene {
     this.themeText.setFontSize(`${themeSize}px`).setPosition(width / 2, 24);
 
     this.layoutHearts(width);
+
+    this.layoutPicker(width, height);
 
     this.layoutButtons({ width, height });
     this.layoutTexts({ width, height });
@@ -291,7 +307,7 @@ export default class MovementScene extends Phaser.Scene {
       this.startGame();
     } else {
       this.state = STATE.READY;
-      this.playPlayerAnimation("person-1-idle");
+      this.playPlayerAnimation(this.animKey("idle"));
       this.messageText
         .setText("PRESS PLAY TO START TO JUMP SCREEN / SPACE / ↑")
         .setVisible(true);
@@ -303,7 +319,7 @@ export default class MovementScene extends Phaser.Scene {
   startGame() {
     this.state = STATE.RUNNING;
     this.messageText.setVisible(false);
-    this.playPlayerAnimation("person-1-run");
+    this.playPlayerAnimation(this.animKey("run"));
     // Hide all buttons of playing the game
     this.toggleHideButtons(false);
     // Play songs
@@ -320,7 +336,7 @@ export default class MovementScene extends Phaser.Scene {
   jump() {
     if (!this.isPlayerGrounded()) return;
     this.player.setVelocityY(-JUMP_SPEED);
-    this.playPlayerAnimation("person-1-jump");
+    this.playPlayerAnimation(this.animKey("jump"));
   }
 
   isPlayerGrounded() {
@@ -338,7 +354,8 @@ export default class MovementScene extends Phaser.Scene {
   }
 
   placePlayerOnGround() {
-    const bodyBottom = (70 + 425 - FRAME_SIZE / 2) * PLAYER_SCALE;
+    const { hitbox, frame, scale } = this.character;
+    const bodyBottom = (hitbox.y + hitbox.h - frame / 2) * scale;
     this.player.setPosition(this.playerX, this.groundY - bodyBottom);
   }
 
@@ -361,7 +378,7 @@ export default class MovementScene extends Phaser.Scene {
 
     this.course.stop();
     this.player.setVelocityX(0);
-    this.playPlayerAnimation("person-1-idle");
+    this.playPlayerAnimation(this.animKey("idle"));
     this.messageText
       .setText(`GAME OVER\nFINAL SCORE ${this.formatScore()}`)
       .setVisible(true);
@@ -391,6 +408,13 @@ export default class MovementScene extends Phaser.Scene {
       Phaser.Input.Keyboard.JustDown(this.keys.jump) ||
       Phaser.Input.Keyboard.JustDown(this.cursors.up);
     if (actionPressed) this.handleAction();
+
+    if (this.state !== STATE.RUNNING) {
+      if (Phaser.Input.Keyboard.JustDown(this.keys.charPrev))
+        this.changeCharacter(-1);
+      if (Phaser.Input.Keyboard.JustDown(this.keys.charNext))
+        this.changeCharacter(1);
+    }
 
     this.player.setX(this.playerX).setVelocityX(0);
     if (this.state !== STATE.RUNNING) return;
@@ -435,10 +459,12 @@ export default class MovementScene extends Phaser.Scene {
 
     if (!this.isPlayerGrounded()) {
       this.playPlayerAnimation(
-        this.player.body.velocity.y < 0 ? "person-1-jump" : "person-1-fall"
+        this.player.body.velocity.y < 0
+          ? this.animKey("jump")
+          : this.animKey("fall")
       );
     } else {
-      this.playPlayerAnimation("person-1-run");
+      this.playPlayerAnimation(this.animKey("run"));
     }
   }
 
@@ -576,6 +602,7 @@ export default class MovementScene extends Phaser.Scene {
       if (b.label.text == "Play" || b.label.text == "Replay")
         b.label.setText(textToPlay);
     });
+    this.pickerItems?.forEach((item) => item.setVisible(type));
   }
 
   layoutButtons({ width, height }) {
@@ -718,5 +745,75 @@ export default class MovementScene extends Phaser.Scene {
     this.invincibleTimer?.remove();
     this.invincibleTimer = null;
     this.player?.setAlpha(1);
+  }
+
+  // Clé d'animation du personnage actuel : "cat-run", "person-1-jump", etc.
+  animKey(name) {
+    return `${this.character.id}-${name}`;
+  }
+
+  applyCharacter(index, save = true) {
+    const count = CHARACTERS.length;
+    this.characterIndex = (index + count) % count;
+    this.character = CHARACTERS[this.characterIndex];
+    const { texture, scale, hitbox } = this.character;
+
+    this.currentPlayerAnimation = null;
+    this.player.setTexture(texture, 0).setScale(scale);
+    this.player.body.setSize(hitbox.w, hitbox.h).setOffset(hitbox.x, hitbox.y);
+    this.pickerName?.setText(this.character.name);
+    if (save) saveCharacterId(this.character.id);
+    if (this.groundY !== undefined) this.placePlayerOnGround();
+    this.playPlayerAnimation(
+      this.animKey(this.state === STATE.RUNNING ? "run" : "idle")
+    );
+  }
+
+  changeCharacter(step) {
+    if (this.state === STATE.RUNNING) return;
+    this.clickSong?.play();
+    this.applyCharacter(this.characterIndex + step);
+  }
+
+  createCharacterPicker() {
+    const style = {
+      fontFamily: "SuperPixel, monospace",
+      color: "#fff4c2",
+      stroke: "#2c2418",
+      strokeThickness: 5,
+    };
+    this.pickerName = this.add
+      .text(0, 0, this.character.name, { ...style, fontSize: "22px" })
+      .setOrigin(0.5)
+      .setDepth(20);
+    const arrow = (label, step) => {
+      const t = this.add
+        .text(0, 0, label, {
+          ...style,
+          fontSize: "36px",
+          padding: { x: 18, y: 8 },
+        })
+        .setOrigin(0.5)
+        .setDepth(20)
+        .setInteractive({ useHandCursor: true });
+      t.on("pointerover", () => t.setColor("#ffd872"));
+      t.on("pointerout", () => t.setColor("#fff4c2"));
+      t.on("pointerup", () => this.changeCharacter(step));
+      return t;
+    };
+    this.pickerPrev = arrow("<", -1);
+    this.pickerNext = arrow(">", 1);
+    this.pickerItems = [this.pickerName, this.pickerPrev, this.pickerNext];
+  }
+
+  layoutPicker(width, height) {
+    if (!this.pickerName) return;
+    const y = height / 2 + 34;
+    const gap = Math.min(150, width / 2 - 50);
+    this.pickerName
+      .setPosition(width / 2, y)
+      .setFontSize(`${Phaser.Math.Clamp(width / 30, 14, 24)}px`);
+    this.pickerPrev.setPosition(width / 2 - gap, y);
+    this.pickerNext.setPosition(width / 2 + gap, y);
   }
 }
