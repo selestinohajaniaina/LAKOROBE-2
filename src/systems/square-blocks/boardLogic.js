@@ -39,9 +39,29 @@ export const LEVEL_CONFIG = {
       [0, 1],
     ],
   },
+  // Les puzzles image n'utilisent ni palette ni `target` : l'identifiant du
+  // morceau encode sa position d'origine (ligne * colonnes + colonne).
+  3: {
+    id: 3,
+    name: "American Flag",
+    type: "image-puzzle",
+    image: "american-flag",
+    // `new URL` laisse Vite inclure l'image source dans le build, sans la
+    // déplacer ni la dupliquer dans public/.
+    imagePath: new URL(
+      "../../assets/block-images/american-flag.png",
+      import.meta.url
+    ).href,
+    rows: 2,
+    columns: 2,
+    order: "shuffled",
+  },
 };
 
 export const levelConfig = (level) => LEVEL_CONFIG[level] ?? null;
+
+export const imagePuzzleConfigs = () =>
+  Object.values(LEVEL_CONFIG).filter((config) => config.type === "image-puzzle");
 
 export const BLOCK_COLORS = [
   0x3f7d32, // vert
@@ -66,6 +86,15 @@ export const SOFT_DROP_SPEED = 10; // touche ↓ maintenue
 export const gridSizeForLevel = (level) =>
   GRID_BY_LEVEL[Math.min(Math.max(level, 1), GRID_BY_LEVEL.length) - 1];
 
+export const gridDimensionsForLevel = (level) => {
+  const config = levelConfig(level);
+  const size = gridSizeForLevel(level);
+  return {
+    rows: config?.rows ?? size,
+    columns: config?.columns ?? size,
+  };
+};
+
 export const fallSpeedForLevel = (level) =>
   Math.min(
     MAX_FALL_SPEED,
@@ -75,17 +104,21 @@ export const fallSpeedForLevel = (level) =>
 export class SquareBoard {
   constructor(level = 1, rng = Math.random) {
     this.level = level;
-    this.size = gridSizeForLevel(level);
     this.rng = rng;
     this.nextId = 1;
     this.config = levelConfig(level);
+    const dimensions = gridDimensionsForLevel(level);
+    this.rows = dimensions.rows;
+    this.columns = dimensions.columns;
+    // Compatibilité avec le rendu des niveaux historiques carrés.
+    this.size = this.columns;
     this.sequence = this.buildSequence();
     this.seqIndex = 0;
     this.retry = null; // bloc refusé, à refaire tomber
     this.lastLock = null;
     // grid[row][col] : null ou un bloc posé
-    this.grid = Array.from({ length: this.size }, () =>
-      Array(this.size).fill(null)
+    this.grid = Array.from({ length: this.rows }, () =>
+      Array(this.columns).fill(null)
     );
     this.placed = 0;
     this.current = null;
@@ -96,7 +129,7 @@ export class SquareBoard {
   // L'image à copier de ce niveau (tableau de lignes), ou null.
   get target() {
     const t = this.config?.target;
-    if (!t || t.length !== this.size || t.some((r) => r.length !== this.size)) {
+    if (!t || t.length !== this.rows || t.some((r) => r.length !== this.columns)) {
       return null;
     }
     return t;
@@ -117,6 +150,24 @@ export class SquareBoard {
           [row[i], row[j]] = [row[j], row[i]];
         }
         seq.push(...row);
+      }
+      return seq;
+    }
+    if (cfg.type === "image-puzzle" && cfg.order === "shuffled") {
+      // Les rangées restent bas → haut : avec la gravité, un morceau du haut
+      // ne peut être accepté avant celui situé sous lui. Chaque rangée est
+      // néanmoins réellement mélangée.
+      const seq = [];
+      for (let row = this.rows - 1; row >= 0; row--) {
+        const tiles = Array.from(
+          { length: this.columns },
+          (_, column) => row * this.columns + column
+        );
+        for (let i = tiles.length - 1; i > 0; i--) {
+          const j = Math.floor(this.rng() * (i + 1));
+          [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+        }
+        seq.push(...tiles);
       }
       return seq;
     }
@@ -147,18 +198,18 @@ export class SquareBoard {
   }
 
   isFull() {
-    return this.placed >= this.size * this.size;
+    return this.placed >= this.rows * this.columns;
   }
 
   // Le bloc est en (col, y) où y est un nombre décimal (position continue,
   // en cases ; y < 0 = espace libre au-dessus de la grille). Il recouvre les
   // lignes floor(y) et ceil(y) : toutes doivent être libres.
   canOccupy(col, y) {
-    if (col < 0 || col >= this.size) return false;
+    if (col < 0 || col >= this.columns) return false;
     const top = Math.floor(y + 1e-9);
     const bottom = Math.ceil(y - 1e-9);
     for (let r = top; r <= bottom; r++) {
-      if (r >= this.size) return false;
+      if (r >= this.rows) return false;
       if (r >= 0 && this.grid[r][col] !== null) return false;
     }
     return true;
@@ -166,7 +217,7 @@ export class SquareBoard {
 
   // Une colonne dont la case du haut est prise est pleine : on n'y entre pas.
   columnOpen(col) {
-    return col >= 0 && col < this.size && this.grid[0][col] === null;
+    return col >= 0 && col < this.columns && this.grid[0][col] === null;
   }
 
   // Fait apparaître le bloc "suivant" en haut de l'espace libre, au centre ou
@@ -177,9 +228,9 @@ export class SquareBoard {
       this.current = null;
       return false;
     }
-    const centre = (this.size - 1) / 2;
+    const centre = (this.columns - 1) / 2;
     const cols = [];
-    for (let c = 0; c < this.size; c++) {
+    for (let c = 0; c < this.columns; c++) {
       if (this.columnOpen(c)) cols.push(c);
     }
     if (cols.length === 0) {
@@ -212,10 +263,10 @@ export class SquareBoard {
   // Ligne (entière) où le bloc se pose dans sa colonne : juste au-dessus du
   // premier bloc posé, ou sur le fond.
   landingRow(col = this.current ? this.current.col : 0) {
-    for (let r = 0; r < this.size; r++) {
+    for (let r = 0; r < this.rows; r++) {
       if (this.grid[r][col] !== null) return r - 1;
     }
-    return this.size - 1;
+    return this.rows - 1;
   }
 
   // Fait tomber le bloc de `distance` cases (décimal, ex. 0.012) : le mouvement
@@ -254,7 +305,11 @@ export class SquareBoard {
     if (!b) return;
     const row = Math.round(b.y);
     if (row < 0) return;
-    const expected = this.target ? this.target[row][b.col] : null;
+    const expected = this.config?.type === "image-puzzle"
+      ? row * this.columns + b.col
+      : this.target
+        ? this.target[row][b.col]
+        : null;
     const ok = expected === null || b.tile === expected;
     this.current = null;
     if (ok) {

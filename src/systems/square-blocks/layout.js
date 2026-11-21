@@ -15,7 +15,7 @@ const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
 
 export const FRAME_OVERHANG = 6; // le cadre dépasse de 6 px autour du plateau
 
-export function computeLayout(W, H, N) {
+export function computeLayout(W, H, rows, columns = rows, gridAspect = 1) {
   const B = FRAME_OVERHANG;
   const base = Math.min(W, H);
   const m = Math.round(clamp(base * 0.04, 10, 36));
@@ -33,17 +33,27 @@ export function computeLayout(W, H, N) {
 
   const area = { x: m, y: m + headerH, w: W - 2 * m, h: H - 2 * m - headerH };
 
-  let Z; // hauteur (et largeur max) de la zone du plateau
+  // Rapport largeur / hauteur d'une case. Pour un puzzle image, il est choisi
+  // pour que la grille complète garde exactement le rapport de la photo.
+  const cellAspect = (gridAspect * rows) / columns;
+  const zoneAspect = (columns * cellAspect) / (rows + DROP_ROWS);
+  let zoneH;
+  let zoneW;
   let zone;
   let next;
   let image;
 
   if (!portrait) {
-    Z = Math.max(60, Math.min(area.h - 2 * B, area.w * 0.55 - 2 * B));
-    const cell = Z / (N + DROP_ROWS);
-    const gridW = N * cell;
-    zone = { x: area.x + B + (Z - gridW) / 2, y: area.y + B, w: gridW, h: Z };
-    const colX = area.x + Z + 2 * B + gap;
+    const reservation = area.w * 0.55 - 2 * B;
+    zoneH = Math.max(60, Math.min(area.h - 2 * B, reservation, reservation / zoneAspect));
+    zoneW = zoneH * zoneAspect;
+    zone = {
+      x: area.x + B + (reservation - zoneW) / 2,
+      y: area.y + B,
+      w: zoneW,
+      h: zoneH,
+    };
+    const colX = area.x + reservation + 2 * B + gap;
     const colW = area.x + area.w - colX;
     const nextH = clamp(area.h * 0.3, 80, 220);
     next = { x: colX, y: area.y, w: colW, h: nextH };
@@ -54,29 +64,30 @@ export function computeLayout(W, H, N) {
       h: area.h - nextH - gap,
     };
   } else {
-    Z = Math.max(60, Math.min(area.w - 2 * B, area.h * 0.62 - 2 * B));
-    const cell = Z / (N + DROP_ROWS);
-    const gridW = N * cell;
+    const maxH = Math.min(area.w - 2 * B, area.h * 0.62 - 2 * B);
+    zoneH = Math.max(60, Math.min(maxH, (area.w - 2 * B) / zoneAspect));
+    zoneW = zoneH * zoneAspect;
     zone = {
-      x: area.x + (area.w - gridW) / 2,
+      x: area.x + (area.w - zoneW) / 2,
       y: area.y + B,
-      w: gridW,
-      h: Z,
+      w: zoneW,
+      h: zoneH,
     };
-    const py = area.y + Z + 2 * B + gap;
+    const py = area.y + zoneH + 2 * B + gap;
     const ph = Math.max(40, Math.min(area.y + area.h - py, area.w * 0.5));
     const nextW = (area.w - gap) * 0.38;
     next = { x: area.x, y: py, w: nextW, h: ph };
     image = { x: area.x + nextW + gap, y: py, w: area.w - nextW - gap, h: ph };
   }
 
-  const cell = Z / (N + DROP_ROWS);
-  const drop = { x: zone.x, y: zone.y, w: zone.w, h: DROP_ROWS * cell };
+  const cellH = zoneH / (rows + DROP_ROWS);
+  const cellW = zoneW / columns;
+  const drop = { x: zone.x, y: zone.y, w: zone.w, h: DROP_ROWS * cellH };
   const grid = {
     x: zone.x,
-    y: zone.y + DROP_ROWS * cell,
+    y: zone.y + DROP_ROWS * cellH,
     w: zone.w,
-    h: N * cell,
+    h: rows * cellH,
   };
 
   const nextLabelH = Math.round(fonts.label * 1.5) + pad;
@@ -96,7 +107,9 @@ export function computeLayout(W, H, N) {
     pad,
     gap,
     fonts,
-    cell,
+    cell: Math.min(cellW, cellH),
+    cellW,
+    cellH,
     zone,
     drop,
     grid,

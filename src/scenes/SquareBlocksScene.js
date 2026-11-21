@@ -5,6 +5,7 @@ import {
   DROP_ROWS,
   fallSpeedForLevel,
   gridSizeForLevel,
+  imagePuzzleConfigs,
 } from "../systems/square-blocks/boardLogic.js";
 import { computeLayout } from "../systems/square-blocks/layout.js";
 
@@ -62,6 +63,16 @@ export default class SquareBlocksScene extends Phaser.Scene {
     super(SCENE_KEY);
   }
 
+  preload() {
+    // Chaque niveau image se déclare dans boardLogic : aucune image n'est
+    // codée en dur dans la scène.
+    for (const config of imagePuzzleConfigs()) {
+      if (!this.textures.exists(config.image)) {
+        this.load.image(config.image, config.imagePath);
+      }
+    }
+  }
+
   // Données optionnelles : { level, score, imageKey }
   init(data) {
     this.startLevel = data?.level ?? 1;
@@ -79,6 +90,7 @@ export default class SquareBlocksScene extends Phaser.Scene {
 
     this.gfx = this.add.graphics().setDepth(1);
     this.targetImage = null;
+    this.puzzlePieces = new Map();
 
     this.titleText = this.add.text(0, 0, "", this.textStyle());
     this.titleText.setOrigin(0, 0.5).setDepth(2);
@@ -117,7 +129,7 @@ export default class SquareBlocksScene extends Phaser.Scene {
 
     this.lockUntil = 0;
     this.beginLevel(this.startLevel);
-    if (this.targetKey) this.setTargetImage(this.targetKey);
+    if (this.targetKey && !this.board.config?.image) this.setTargetImage(this.targetKey);
   }
 
   textStyle(extra = {}) {
@@ -196,6 +208,7 @@ export default class SquareBlocksScene extends Phaser.Scene {
     this.level = level;
     this.levelStartScore = this.score;
     this.board = new SquareBoard(level);
+    this.configureImagePuzzle();
     this.state = "playing";
     this.softAcc = 0;
     this.wrong = null;
@@ -206,6 +219,41 @@ export default class SquareBlocksScene extends Phaser.Scene {
     this.applyLayout();
     this.updateHud();
     this.dirty = true;
+  }
+
+  configureImagePuzzle() {
+    this.destroyPuzzlePieces();
+    this.puzzleAspect = 1;
+    const config = this.board.config;
+    if (config?.type !== "image-puzzle" || !this.textures.exists(config.image)) {
+      this.setTargetImage(null);
+      return;
+    }
+    const source = this.textures.get(config.image).getSourceImage();
+    this.puzzleAspect = source.width / source.height;
+    this.setTargetImage(config.image);
+    for (let row = 0; row < this.board.rows; row++) {
+      for (let column = 0; column < this.board.columns; column++) {
+        const id = row * this.board.columns + column;
+        const key = `${config.image}-piece-${this.board.rows}x${this.board.columns}-${id}`;
+        if (!this.textures.exists(key)) {
+          const sx = Math.floor((column * source.width) / this.board.columns);
+          const sy = Math.floor((row * source.height) / this.board.rows);
+          const ex = Math.floor(((column + 1) * source.width) / this.board.columns);
+          const ey = Math.floor(((row + 1) * source.height) / this.board.rows);
+          const texture = this.textures.createCanvas(key, ex - sx, ey - sy);
+          texture.context.drawImage(source, sx, sy, ex - sx, ey - sy, 0, 0, ex - sx, ey - sy);
+          texture.refresh();
+        }
+        this.puzzlePieces.set(id, this.add.image(0, 0, key).setOrigin(0).setDepth(3));
+      }
+    }
+  }
+
+  destroyPuzzlePieces() {
+    if (!this.puzzlePieces) return;
+    for (const piece of this.puzzlePieces.values()) piece.destroy();
+    this.puzzlePieces.clear();
   }
 
   nextLevel() {
@@ -357,7 +405,13 @@ export default class SquareBlocksScene extends Phaser.Scene {
   applyLayout() {
     const W = this.scale.width;
     const H = this.scale.height;
-    const L = (this.layout = computeLayout(W, H, this.board.size));
+    const L = (this.layout = computeLayout(
+      W,
+      H,
+      this.board.rows,
+      this.board.columns,
+      this.puzzleAspect ?? 1
+    ));
 
     if (this.background) {
       const s = Math.max(
@@ -403,8 +457,9 @@ export default class SquareBlocksScene extends Phaser.Scene {
   }
 
   updateHud() {
-    const n = this.board.size;
-    this.titleText.setText(`NIVEAU ${this.level}  ${n}X${n}`);
+    this.titleText.setText(
+      `NIVEAU ${this.level}  ${this.board.columns}X${this.board.rows}`
+    );
     this.scoreText.setText(`SCORE ${this.score}`);
   }
 
@@ -434,7 +489,7 @@ export default class SquareBlocksScene extends Phaser.Scene {
   }
 
   drawBoard(g, L, board) {
-    const { zone, drop, grid, cell } = L;
+    const { zone, drop, grid, cellW, cellH } = L;
     const pad = BLOCK_GAP;
     const o = 6; // débord du cadre
 
@@ -447,13 +502,13 @@ export default class SquareBlocksScene extends Phaser.Scene {
 
     // Cases vides
     g.fillStyle(0xffffff, 0.06);
-    for (let r = 0; r < board.size; r++) {
-      for (let c = 0; c < board.size; c++) {
+    for (let r = 0; r < board.rows; r++) {
+      for (let c = 0; c < board.columns; c++) {
         g.fillRect(
-          grid.x + c * cell + pad,
-          grid.y + r * cell + pad,
-          cell - 2 * pad,
-          cell - 2 * pad
+          grid.x + c * cellW + pad,
+          grid.y + r * cellH + pad,
+          cellW - 2 * pad,
+          cellH - 2 * pad
         );
       }
     }
@@ -465,24 +520,25 @@ export default class SquareBlocksScene extends Phaser.Scene {
       if (landing - cur.y > 0.01) {
         g.lineStyle(3, COLORS.border, 0.6);
         g.strokeRect(
-          grid.x + cur.col * cell + pad,
-          grid.y + landing * cell + pad,
-          cell - 2 * pad,
-          cell - 2 * pad
+          grid.x + cur.col * cellW + pad,
+          grid.y + landing * cellH + pad,
+          cellW - 2 * pad,
+          cellH - 2 * pad
         );
       }
     }
 
     // Blocs posés
-    for (let r = 0; r < board.size; r++) {
-      for (let c = 0; c < board.size; c++) {
+    for (let r = 0; r < board.rows; r++) {
+      for (let c = 0; c < board.columns; c++) {
         const b = board.grid[r][c];
-        if (b) {
+        if (b && !this.isImagePiece(b, board)) {
           this.drawBlock(
             g,
-            grid.x + c * cell + pad,
-            grid.y + r * cell + pad,
-            cell - 2 * pad,
+            grid.x + c * cellW + pad,
+            grid.y + r * cellH + pad,
+            cellW - 2 * pad,
+            cellH - 2 * pad,
             b.color,
             this.label(b.tile)
           );
@@ -494,20 +550,21 @@ export default class SquareBlocksScene extends Phaser.Scene {
     if (this.wrong) {
       g.fillStyle(0xd1495b, 0.55);
       g.fillRect(
-        grid.x + this.wrong.col * cell + pad,
-        grid.y + this.wrong.row * cell + pad,
-        cell - 2 * pad,
-        cell - 2 * pad
+        grid.x + this.wrong.col * cellW + pad,
+        grid.y + this.wrong.row * cellH + pad,
+        cellW - 2 * pad,
+        cellH - 2 * pad
       );
     }
 
     // Bloc qui tombe (y < 0 = dans l'espace libre du haut)
-    if (cur) {
+    if (cur && !this.isImagePiece(cur, board)) {
       this.drawBlock(
         g,
-        grid.x + cur.col * cell + pad,
-        zone.y + (cur.y + DROP_ROWS) * cell + pad,
-        cell - 2 * pad,
+        grid.x + cur.col * cellW + pad,
+        zone.y + (cur.y + DROP_ROWS) * cellH + pad,
+        cellW - 2 * pad,
+        cellH - 2 * pad,
         cur.color,
         this.label(cur.tile)
       );
@@ -518,21 +575,60 @@ export default class SquareBlocksScene extends Phaser.Scene {
     g.strokeRoundedRect(zone.x - o, zone.y - o, zone.w + 2 * o, zone.h + 2 * o, 14);
     g.lineStyle(2, COLORS.border, 0.6);
     g.lineBetween(grid.x, grid.y, grid.x + grid.w, grid.y);
+    this.renderImagePieces(L, board);
   }
 
-  drawBlock(g, x, y, s, color, tile = null) {
+  isImagePiece(block, board = this.board) {
+    // Une case libre est `null`. Avec `block?.tile !== null`, `null` donnait
+    // `undefined !== null` (true) et était donc pris à tort pour un morceau.
+    // Un morceau image doit porter un indice entier dans les limites du puzzle.
+    return Boolean(
+      board?.config?.type === "image-puzzle" &&
+        block &&
+        Number.isInteger(block.tile) &&
+        block.tile >= 0 &&
+        block.tile < board.rows * board.columns
+    );
+  }
+
+  renderImagePieces(L, board) {
+    if (!this.puzzlePieces?.size) return;
+    for (const piece of this.puzzlePieces.values()) piece.setVisible(false);
+    const place = (block, column, y) => {
+      if (!this.isImagePiece(block, board)) return;
+      if (!Number.isInteger(column) || !Number.isFinite(y)) return;
+      const piece = this.puzzlePieces.get(block.tile);
+      if (!piece) return;
+      piece.setVisible(true).setPosition(
+        L.grid.x + column * L.cellW,
+        L.zone.y + (y + DROP_ROWS) * L.cellH
+      ).setDisplaySize(L.cellW, L.cellH);
+    };
+    for (let row = 0; row < board.rows; row++) {
+      for (let column = 0; column < board.columns; column++) {
+        const block = board.grid[row][column];
+        if (this.isImagePiece(block, board)) place(block, column, row);
+      }
+    }
+    if (this.isImagePiece(board.current, board)) {
+      place(board.current, board.current.col, board.current.y);
+    }
+  }
+
+  drawBlock(g, x, y, w, h, color, tile = null) {
+    const s = Math.min(w, h);
     const r = Math.max(2, s * 0.05); // coins presque droits : blocs bien jointifs
     const i = Math.max(1, s * 0.03);
     g.fillStyle(mix(color, 0x000000, 0.35), 1);
-    g.fillRoundedRect(x, y, s, s, r);
+    g.fillRoundedRect(x, y, w, h, r);
     g.fillStyle(color, 1);
-    g.fillRoundedRect(x + i, y + i, s - 2 * i, s - 2 * i, r * 0.7);
+    g.fillRoundedRect(x + i, y + i, w - 2 * i, h - 2 * i, r * 0.7);
     g.fillStyle(mix(color, 0xffffff, 0.35), 0.9);
     g.fillRoundedRect(
       x + i * 2,
       y + i * 2,
-      s - i * 4,
-      Math.max(2, s * 0.07),
+      w - i * 4,
+      Math.max(2, h * 0.07),
       r * 0.4
     );
     if (tile !== null && tile !== undefined) this.drawDigit(g, x, y, s, tile);
@@ -580,12 +676,16 @@ export default class SquareBlocksScene extends Phaser.Scene {
     const freeH = p.h - L.nextLabelH - L.pad;
     const size = Math.min(L.cell, freeH * 0.9, p.w * 0.6);
     // Le dernier bloc de la grille est en train de tomber : plus de "suivant".
-    const remaining = board.size * board.size - board.placed;
+    const remaining = board.rows * board.columns - board.placed;
     if (size < 8 || !board.next || remaining <= (board.current ? 1 : 0)) return;
+    // Les sprites image sont réservés au plateau afin qu'un morceau n'apparaisse
+    // jamais deux fois à la fois. Le panneau garde son cadre et son libellé.
+    if (board.config?.type === "image-puzzle") return;
     this.drawBlock(
       g,
       p.x + (p.w - size) / 2,
       p.y + L.nextLabelH + (freeH - size) / 2,
+      size,
       size,
       board.next.color,
       this.label(board.next.tile)
@@ -626,6 +726,7 @@ export default class SquareBlocksScene extends Phaser.Scene {
           g,
           ox + c * cs + BLOCK_GAP,
           oy + r * cs + BLOCK_GAP,
+          cs - 2 * BLOCK_GAP,
           cs - 2 * BLOCK_GAP,
           this.board.colorOf(target[r][c]),
           this.label(target[r][c])
