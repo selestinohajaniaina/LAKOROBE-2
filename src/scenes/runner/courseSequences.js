@@ -258,7 +258,7 @@ const WASHINGTON = [
       { role: "hazard", texture: "dc-barrier", x: 620 },
       { role: "decor", texture: "dc-columns", x: 700 },
       { role: "platform", texture: "dc-slab", x: 705, height: 90 },
-      { role: "hazard", texture: "dc-police", x: 960 },
+      { role: "hazard", texture: "dc-police", x: 1060 },
     ],
   },
   highRoute({ decor: "dc-columns", ledge: "dc-slab", hazard: "dc-police" }),
