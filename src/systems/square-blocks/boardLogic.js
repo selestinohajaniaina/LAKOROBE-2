@@ -58,6 +58,19 @@ export const LEVEL_CONFIG = {
     columns: 2,
     order: "shuffled",
   },
+  4: {
+    id: 4,
+    name: "Madagascar Flag",
+    type: "image-puzzle",
+    image: "madagascar-flag",
+    imagePath: new URL(
+      "../../assets/block-images/madagascar-flag.png",
+      import.meta.url
+    ).href,
+    rows: 2,
+    columns: 2,
+    order: "shuffled",
+  },
 };
 
 export const levelConfig = (level) => LEVEL_CONFIG[level] ?? null;
