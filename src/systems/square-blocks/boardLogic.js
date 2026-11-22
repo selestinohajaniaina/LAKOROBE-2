@@ -21,6 +21,7 @@ export const GRID_BY_LEVEL = [2, 2, 3, 3, 4, 4, 5, 5, 6, 6];
 export const LEVEL_CONFIG = {
   // Niveau 1 : chiffres 0 à 3, blocs sombres, arrivée dans l'ordre 0, 1, 2, 3.
   1: {
+    name: "Number Pattern",
     color: 0x3a4150,
     digits: true,
     sequence: [0, 1, 2, 3],
@@ -31,6 +32,7 @@ export const LEVEL_CONFIG = {
   },
   // Niveau 2 : 4 couleurs (rouge, bleu, jaune, vert), ordre mélangé.
   2: {
+    name: "Color Pattern",
     palette: [0xd1495b, 0x4a90a4, 0xf2bd55, 0x3f7d32],
     digits: false,
     order: "bottom-up-shuffled",

@@ -4,7 +4,6 @@ import {
   SOFT_DROP_SPEED,
   DROP_ROWS,
   fallSpeedForLevel,
-  gridSizeForLevel,
   imagePuzzleConfigs,
 } from "../systems/square-blocks/boardLogic.js";
 import { computeLayout } from "../systems/square-blocks/layout.js";
@@ -19,6 +18,9 @@ const COLORS = {
   dropZone: 0x143524,
   gridBg: 0x0d2418,
 };
+
+const HINT = "USE <- AND ->"; // petit rappel des touches, affiché pendant la partie
+const BUTTON = { normal: 0x3f7d32, hover: 0x4d9650, down: 0x2d6530 };
 
 const DAS_DELAY = 170; // délai avant répétition quand on garde ← ou →
 const REPEAT_DELAY = 60; // intervalle de répétition
@@ -109,19 +111,25 @@ export default class SquareBlocksScene extends Phaser.Scene {
     );
     this.imageLabel.setOrigin(0.5, 0).setDepth(2);
 
-    // Écran de pause / fin de niveau.
-    this.overlayBg = this.add
-      .rectangle(0, 0, 1, 1, 0x000000, 0.7)
-      .setOrigin(0, 0)
-      .setDepth(10);
-    this.overlayTitle = this.add
-      .text(0, 0, "", this.textStyle({ align: "center" }))
+    // Petit rappel des touches (n'occupe aucune zone dédiée) et boutons de fin
+    // de niveau : cachés pendant la partie, visibles quand le niveau est fini.
+    this.hintText = this.add
+      .text(
+        0,
+        0,
+        HINT,
+        this.textStyle({
+          fontSize: "12px",
+          strokeThickness: 3,
+          color: "#e8dca0",
+        })
+      )
       .setOrigin(0.5)
-      .setDepth(11);
-    this.overlaySub = this.add
-      .text(0, 0, "", this.textStyle({ align: "center" }))
-      .setOrigin(0.5, 0)
-      .setDepth(11);
+      .setAlpha(0.85)
+      .setDepth(3);
+    this.primaryButton = this.createButton();
+    this.homeButton = this.createButton();
+    this.homeButton.set("EXIT TO HOME", () => this.goHome());
 
     this.setupInput();
 
@@ -130,9 +138,9 @@ export default class SquareBlocksScene extends Phaser.Scene {
       this.scale.off("resize", this.onResize, this)
     );
 
-    this.lockUntil = 0;
     this.beginLevel(this.startLevel);
-    if (this.targetKey && !this.board.config?.image) this.setTargetImage(this.targetKey);
+    if (this.targetKey && !this.board.config?.image)
+      this.setTargetImage(this.targetKey);
   }
 
   textStyle(extra = {}) {
@@ -144,6 +152,68 @@ export default class SquareBlocksScene extends Phaser.Scene {
       strokeThickness: 4,
       ...extra,
     };
+  }
+
+  createButton() {
+    const background = this.add
+      .rectangle(0, 0, 1, 1, BUTTON.normal)
+      .setStrokeStyle(3, COLORS.border)
+      .setDepth(4)
+      .setInteractive({ useHandCursor: true });
+    const label = this.add
+      .text(0, 0, "", this.textStyle({ align: "center" }))
+      .setOrigin(0.5)
+      .setDepth(5);
+    const button = {
+      background,
+      label,
+      action: null,
+      set(text, action) {
+        label.setText(text);
+        button.action = action;
+      },
+    };
+    background.on("pointerover", () => background.setFillStyle(BUTTON.hover));
+    background.on("pointerout", () => background.setFillStyle(BUTTON.normal));
+    background.on("pointerdown", () => background.setFillStyle(BUTTON.down));
+    background.on("pointerup", () => {
+      background.setFillStyle(BUTTON.hover);
+      button.action?.();
+    });
+    return button;
+  }
+
+  // Les boutons n'existent qu'à la fin d'un niveau : NEXT LEVEL après une
+  // réussite, RETRY après un game over. EXIT TO HOME accompagne les deux.
+
+  refreshControls() {
+    const ready = this.state === "ready";
+    const ended = this.state === "levelComplete" || this.state === "gameOver";
+
+    if (ready) {
+      this.primaryButton.set("PLAY", () => this.startPlaying());
+      this.homeButton.set("EXIT TO HOME", () => this.goHome());
+    } else if (this.state === "levelComplete") {
+      this.primaryButton.set("NEXT LEVEL", () => this.nextLevel());
+    } else if (this.state === "gameOver") {
+      this.primaryButton.set("RETRY", () => this.retryLevel());
+    }
+
+    const showButtons = ready || ended;
+
+    [this.primaryButton, this.homeButton].forEach(({ background, label }) => {
+      background.setVisible(showButtons).setFillStyle(BUTTON.normal);
+      label.setVisible(showButtons);
+
+      if (showButtons) {
+        background.disableInteractive().setInteractive({ useHandCursor: true });
+      } else {
+        background.disableInteractive();
+      }
+    });
+
+    this.hintText.setVisible(!showButtons);
+    this.dirty = true;
   }
 
   // ---------------------------------------------------------------- Entrées
@@ -166,8 +236,6 @@ export default class SquareBlocksScene extends Phaser.Scene {
     kb.on("keydown-UP", (e) => this.onDropKey(e));
     kb.on("keydown-W", (e) => this.onDropKey(e));
     kb.on("keydown-SPACE", (e) => this.onSpaceKey(e));
-    kb.on("keydown-ENTER", (e) => this.onEnterKey(e));
-    kb.on("keydown-P", (e) => this.onPauseKey(e));
     kb.on("keydown-R", (e) => this.onRestartKey(e));
     kb.on("keydown-ESC", () => this.goHome());
   }
@@ -179,30 +247,16 @@ export default class SquareBlocksScene extends Phaser.Scene {
 
   onSpaceKey(e) {
     if (e?.repeat) return;
-    if (this.state === "levelComplete") this.nextLevel();
-    else this.hardDrop();
-  }
-
-  onEnterKey(e) {
-    if (e?.repeat) return;
-    if (this.state === "levelComplete") this.nextLevel();
-    else if (this.state === "paused") this.togglePause();
-  }
-
-  onPauseKey(e) {
-    if (e?.repeat) return;
-    this.togglePause();
+    this.hardDrop();
   }
 
   onRestartKey(e) {
     if (e?.repeat) return;
-    if (this.state === "levelComplete") return;
     if (this.state === "gameOver") {
-      this.score = 0;
-      this.lives = MAX_LIVES;
-      this.beginLevel(this.startLevel);
+      this.retryLevel();
       return;
     }
+    if (this.state !== "playing") return;
     this.score = this.levelStartScore;
     this.beginLevel(this.level);
   }
@@ -217,16 +271,18 @@ export default class SquareBlocksScene extends Phaser.Scene {
     this.level = level;
     this.levelStartScore = this.score;
     this.board = new SquareBoard(level);
+    this.updateHearts(false);
     this.configureImagePuzzle();
-    this.state = "playing";
+    // Exception : le niveau 1 attend le clic sur PLAY.
+    this.state = level === 1 ? "ready" : "playing";
     this.softAcc = 0;
     this.wrong = null;
     this.hDir = 0;
     this.hTimer = 0;
     this.hRepeating = false;
-    this.hideOverlay();
     this.applyLayout();
     this.updateHud();
+    this.refreshControls();
     this.dirty = true;
   }
 
@@ -234,7 +290,10 @@ export default class SquareBlocksScene extends Phaser.Scene {
     this.destroyPuzzlePieces();
     this.puzzleAspect = 1;
     const config = this.board.config;
-    if (config?.type !== "image-puzzle" || !this.textures.exists(config.image)) {
+    if (
+      config?.type !== "image-puzzle" ||
+      !this.textures.exists(config.image)
+    ) {
       this.setTargetImage(null);
       return;
     }
@@ -248,13 +307,28 @@ export default class SquareBlocksScene extends Phaser.Scene {
         if (!this.textures.exists(key)) {
           const sx = Math.floor((column * source.width) / this.board.columns);
           const sy = Math.floor((row * source.height) / this.board.rows);
-          const ex = Math.floor(((column + 1) * source.width) / this.board.columns);
+          const ex = Math.floor(
+            ((column + 1) * source.width) / this.board.columns
+          );
           const ey = Math.floor(((row + 1) * source.height) / this.board.rows);
           const texture = this.textures.createCanvas(key, ex - sx, ey - sy);
-          texture.context.drawImage(source, sx, sy, ex - sx, ey - sy, 0, 0, ex - sx, ey - sy);
+          texture.context.drawImage(
+            source,
+            sx,
+            sy,
+            ex - sx,
+            ey - sy,
+            0,
+            0,
+            ex - sx,
+            ey - sy
+          );
           texture.refresh();
         }
-        this.puzzlePieces.set(id, this.add.image(0, 0, key).setOrigin(0).setDepth(3));
+        this.puzzlePieces.set(
+          id,
+          this.add.image(0, 0, key).setOrigin(0).setDepth(3)
+        );
       }
     }
   }
@@ -265,22 +339,17 @@ export default class SquareBlocksScene extends Phaser.Scene {
     this.puzzlePieces.clear();
   }
 
-  nextLevel() {
-    if (this.time.now < this.lockUntil) return;
-    this.beginLevel(this.level + 1);
+  startPlaying() {
+    if (this.state !== "ready") return;
+    this.state = "playing";
+    this.refreshControls();
+    this.dirty = true;
   }
 
-  togglePause() {
-    if (this.state === "playing") {
-      this.state = "paused";
-      this.showOverlay(
-        "PAUSE",
-        "P : REPRENDRE\nR : RECOMMENCER LE NIVEAU\nÉCHAP : MENU"
-      );
-    } else if (this.state === "paused") {
-      this.state = "playing";
-      this.hideOverlay();
-    }
+  nextLevel() {
+    this.lives = MAX_LIVES;
+    this.updateHearts(false);
+    this.beginLevel(this.level + 1);
   }
 
   hardDrop() {
@@ -318,22 +387,20 @@ export default class SquareBlocksScene extends Phaser.Scene {
   completeLevel() {
     this.state = "levelComplete";
     this.score += this.level * 100;
-    this.lockUntil = this.time.now + 600; // évite de sauter l'écran par erreur
     this.cameras.main.flash(250, 255, 255, 255);
-    const nextSize = gridSizeForLevel(this.level + 1);
-    this.showOverlay(
-      `NIVEAU ${this.level}\nTERMINÉ`,
-      `ENTRÉE OU ESPACE\nGRILLE SUIVANTE : ${nextSize}X${nextSize}`
-    );
+    this.refreshControls();
   }
 
   gameOver() {
     this.state = "gameOver";
-    this.lockUntil = this.time.now + 300;
-    this.showOverlay(
-      "GAME OVER",
-      `SCORE FINAL ${this.score}\nR : NOUVELLE PARTIE\nÉCHAP : MENU`
-    );
+    this.refreshControls();
+  }
+
+  retryLevel() {
+    this.score = this.levelStartScore;
+    this.lives = MAX_LIVES;
+    this.updateHearts(false);
+    this.beginLevel(this.level);
   }
 
   createHearts() {
@@ -486,10 +553,7 @@ export default class SquareBlocksScene extends Phaser.Scene {
     ));
 
     if (this.background) {
-      const s = Math.max(
-        W / this.background.width,
-        H / this.background.height
-      );
+      const s = Math.max(W / this.background.width, H / this.background.height);
       this.background.setPosition(W / 2, H / 2).setScale(s);
     }
 
@@ -499,7 +563,7 @@ export default class SquareBlocksScene extends Phaser.Scene {
     this.layoutHearts(W);
     this.scoreText
       .setFontSize(L.fonts.label)
-      .setPosition(L.score.x, L.score.y + L.fonts.label * 1.45);
+      .setPosition(L.score.x, L.score.y + L.fonts.label * 0.8);
 
     this.nextLabel
       .setFontSize(L.fonts.label)
@@ -510,15 +574,7 @@ export default class SquareBlocksScene extends Phaser.Scene {
       .setWordWrapWidth(Math.max(10, L.image.w - 8))
       .setPosition(L.image.x + L.image.w / 2, L.image.y + L.pad);
 
-    this.overlayBg.setSize(W, H);
-    this.overlayTitle
-      .setFontSize(L.fonts.overlay)
-      .setWordWrapWidth(W * 0.9)
-      .setPosition(W / 2, H * 0.4);
-    this.overlaySub
-      .setFontSize(L.fonts.sub)
-      .setWordWrapWidth(W * 0.9)
-      .setPosition(W / 2, H * 0.4 + L.fonts.overlay * 1.8);
+    this.layoutFooter(L);
 
     if (this.targetImage) {
       const a = L.imageInner;
@@ -540,18 +596,31 @@ export default class SquareBlocksScene extends Phaser.Scene {
     this.scoreText.setText(`SCORE ${this.score}`);
   }
 
-  showOverlay(title, sub) {
-    this.overlayTitle.setText(title);
-    this.overlaySub.setText(sub);
-    this.overlayBg.setVisible(true);
-    this.overlayTitle.setVisible(true);
-    this.overlaySub.setVisible(true);
-  }
-
-  hideOverlay() {
-    this.overlayBg.setVisible(false);
-    this.overlayTitle.setVisible(false);
-    this.overlaySub.setVisible(false);
+  // Place les deux boutons côte à côte dans la zone prévue par computeLayout.
+  layoutFooter(L) {
+    const { buttons, gap } = L;
+    const w = (buttons.w - gap) / 2;
+    const y = buttons.y + buttons.h / 2;
+    [this.primaryButton, this.homeButton].forEach((button, index) => {
+      const x = buttons.x + w / 2 + index * (w + gap);
+      button.background.setSize(w, buttons.h).setPosition(x, y);
+      // la zone cliquable suit la nouvelle taille du bouton
+      if (button.background.visible) {
+        button.background
+          .disableInteractive()
+          .setInteractive({ useHandCursor: true });
+      }
+      button.label
+        .setFontSize(L.fonts.label)
+        .setWordWrapWidth(w - 16)
+        .setPosition(x, y);
+    });
+    // Le rappel des touches prend la place des boutons tant qu'ils sont cachés.
+    // Le rappel des touches est centré entre le plateau et l'image cible.
+    const hintY = (L.zone.y + L.zone.h + L.image.y) / 2;
+    this.hintText
+      .setFontSize(Math.max(9, Math.round(L.fonts.label * 0.8)))
+      .setPosition(L.W / 2, hintY);
   }
 
   render() {
@@ -571,7 +640,13 @@ export default class SquareBlocksScene extends Phaser.Scene {
     const o = 6; // débord du cadre
 
     g.fillStyle(COLORS.panel, 0.75);
-    g.fillRoundedRect(zone.x - o, zone.y - o, zone.w + 2 * o, zone.h + 2 * o, 14);
+    g.fillRoundedRect(
+      zone.x - o,
+      zone.y - o,
+      zone.w + 2 * o,
+      zone.h + 2 * o,
+      14
+    );
     g.fillStyle(COLORS.dropZone, 0.55);
     g.fillRect(drop.x, drop.y, drop.w, drop.h);
     g.fillStyle(COLORS.gridBg, 0.9);
@@ -649,7 +724,13 @@ export default class SquareBlocksScene extends Phaser.Scene {
 
     // Cadre et séparation espace libre / grille
     g.lineStyle(4, COLORS.border, 1);
-    g.strokeRoundedRect(zone.x - o, zone.y - o, zone.w + 2 * o, zone.h + 2 * o, 14);
+    g.strokeRoundedRect(
+      zone.x - o,
+      zone.y - o,
+      zone.w + 2 * o,
+      zone.h + 2 * o,
+      14
+    );
     g.lineStyle(2, COLORS.border, 0.6);
     g.lineBetween(grid.x, grid.y, grid.x + grid.w, grid.y);
     this.renderImagePieces(L, board);
@@ -676,10 +757,13 @@ export default class SquareBlocksScene extends Phaser.Scene {
       if (!Number.isInteger(column) || !Number.isFinite(y)) return;
       const piece = this.puzzlePieces.get(block.tile);
       if (!piece) return;
-      piece.setVisible(true).setPosition(
-        L.grid.x + column * L.cellW,
-        L.zone.y + (y + DROP_ROWS) * L.cellH
-      ).setDisplaySize(L.cellW, L.cellH);
+      piece
+        .setVisible(true)
+        .setPosition(
+          L.grid.x + column * L.cellW,
+          L.zone.y + (y + DROP_ROWS) * L.cellH
+        )
+        .setDisplaySize(L.cellW, L.cellH);
     };
     for (let row = 0; row < board.rows; row++) {
       for (let column = 0; column < board.columns; column++) {
