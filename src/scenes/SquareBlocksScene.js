@@ -19,7 +19,7 @@ const COLORS = {
   gridBg: 0x0d2418,
 };
 
-const HINT = "USE <- AND ->"; // petit rappel des touches, affiché pendant la partie
+const HINT = "USE ← AND →";
 const BUTTON = { normal: 0x3f7d32, hover: 0x4d9650, down: 0x2d6530 };
 
 const DAS_DELAY = 170; // délai avant répétition quand on garde ← ou →
@@ -111,8 +111,7 @@ export default class SquareBlocksScene extends Phaser.Scene {
     );
     this.imageLabel.setOrigin(0.5, 0).setDepth(2);
 
-    // Petit rappel des touches (n'occupe aucune zone dédiée) et boutons de fin
-    // de niveau : cachés pendant la partie, visibles quand le niveau est fini.
+    // Rappel permanent des touches et message de fin directement dans l'UI.
     this.hintText = this.add
       .text(
         0,
@@ -127,6 +126,20 @@ export default class SquareBlocksScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setAlpha(0.85)
       .setDepth(3);
+    this.gameOverText = this.add
+      .text(
+        0,
+        0,
+        "",
+        this.textStyle({
+          fontSize: "14px",
+          align: "center",
+          color: "#ff9aa8",
+        })
+      )
+      .setOrigin(0.5, 0)
+      .setDepth(3)
+      .setVisible(false);
     this.primaryButton = this.createButton();
     this.homeButton = this.createButton();
     this.homeButton.set("EXIT TO HOME", () => this.goHome());
@@ -212,7 +225,11 @@ export default class SquareBlocksScene extends Phaser.Scene {
       }
     });
 
-    this.hintText.setVisible(!showButtons);
+    // L'instruction reste affichée dans tous les états de la scène.
+    this.hintText.setVisible(true);
+    this.gameOverText
+      .setText(`GAME OVER\nFINAL SCORE ${this.score}`)
+      .setVisible(this.state === "gameOver");
     this.dirty = true;
   }
 
@@ -615,12 +632,18 @@ export default class SquareBlocksScene extends Phaser.Scene {
         .setWordWrapWidth(w - 16)
         .setPosition(x, y);
     });
-    // Le rappel des touches prend la place des boutons tant qu'ils sont cachés.
-    // Le rappel des touches est centré entre le plateau et l'image cible.
-    const hintY = (L.zone.y + L.zone.h + L.image.y) / 2;
+    // Le rappel est volontairement haut, juste sous l'en-tête.
+    const hintY = Math.min(
+      L.zone.y - L.pad * 1.5,
+      L.title.y + L.fonts.title * 1.45
+    ) + 200;
     this.hintText
       .setFontSize(Math.max(9, Math.round(L.fonts.label * 0.8)))
       .setPosition(L.W / 2, hintY);
+    this.gameOverText
+      .setFontSize(Math.max(11, Math.round(L.fonts.label * 0.95)))
+      .setWordWrapWidth(L.W * 0.8)
+      .setPosition(L.W / 2, hintY + L.fonts.label * 1.2);
   }
 
   render() {
