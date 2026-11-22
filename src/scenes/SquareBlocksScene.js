@@ -28,6 +28,7 @@ const HARD_DROP_SCORE = 2; // par case en chute immédiate
 const WRONG_FLASH_MS = 450;
 const DIGIT_COLOR = 0xfff0b5;
 const BLOCK_GAP = 1; // espace (px) de chaque côté d'un bloc : très serré
+const MAX_LIVES = 4;
 
 // Chiffres 0-9 en pixels (3 x 5), dessinés avec le Graphics : pas de texte.
 const DIGITS = {
@@ -78,6 +79,7 @@ export default class SquareBlocksScene extends Phaser.Scene {
     this.startLevel = data?.level ?? 1;
     this.score = data?.score ?? 0;
     this.targetKey = data?.imageKey ?? null;
+    this.lives = MAX_LIVES;
   }
 
   create() {
@@ -96,6 +98,7 @@ export default class SquareBlocksScene extends Phaser.Scene {
     this.titleText.setOrigin(0, 0.5).setDepth(2);
     this.scoreText = this.add.text(0, 0, "", this.textStyle());
     this.scoreText.setOrigin(1, 0.5).setDepth(2);
+    this.createHearts();
     this.nextLabel = this.add.text(0, 0, "NEXT", this.textStyle());
     this.nextLabel.setOrigin(0.5, 0).setDepth(2);
     this.imageLabel = this.add.text(
@@ -194,6 +197,12 @@ export default class SquareBlocksScene extends Phaser.Scene {
   onRestartKey(e) {
     if (e?.repeat) return;
     if (this.state === "levelComplete") return;
+    if (this.state === "gameOver") {
+      this.score = 0;
+      this.lives = MAX_LIVES;
+      this.beginLevel(this.startLevel);
+      return;
+    }
     this.score = this.levelStartScore;
     this.beginLevel(this.level);
   }
@@ -291,7 +300,11 @@ export default class SquareBlocksScene extends Phaser.Scene {
         until: this.time.now + WRONG_FLASH_MS,
       };
       this.cameras.main.shake(150, 0.006);
-      this.board.spawn();
+      // `onLocked` n'est appelé qu'après un verrouillage effectif : c'est le
+      // point unique qui retire une vie pour un placement refusé.
+      this.loseLife();
+      if (this.lives === 0) this.gameOver();
+      else this.board.spawn();
     } else {
       this.score += BLOCK_SCORE;
       if (this.board.isFull()) this.completeLevel();
@@ -312,6 +325,65 @@ export default class SquareBlocksScene extends Phaser.Scene {
       `NIVEAU ${this.level}\nTERMINÉ`,
       `ENTRÉE OU ESPACE\nGRILLE SUIVANTE : ${nextSize}X${nextSize}`
     );
+  }
+
+  gameOver() {
+    this.state = "gameOver";
+    this.lockUntil = this.time.now + 300;
+    this.showOverlay(
+      "GAME OVER",
+      `SCORE FINAL ${this.score}\nR : NOUVELLE PARTIE\nÉCHAP : MENU`
+    );
+  }
+
+  createHearts() {
+    // Même dessin et mêmes textures que Travel. Les textures sont partagées
+    // si cette scène a déjà été visitée dans la session Phaser.
+    const makeHeart = (key, fill, stroke) => {
+      if (this.textures.exists(key)) return;
+      const g = this.make.graphics({ add: false });
+      g.fillStyle(stroke).fillCircle(10, 11, 9).fillCircle(24, 11, 9);
+      g.fillTriangle(1, 14, 33, 14, 17, 32);
+      g.fillStyle(fill).fillCircle(10, 11, 7).fillCircle(24, 11, 7);
+      g.fillTriangle(3, 14, 31, 14, 17, 29);
+      if (key === "heart-full") g.fillStyle(0xff9aa8).fillCircle(8, 8, 3);
+      g.generateTexture(key, 34, 34);
+      g.destroy();
+    };
+    makeHeart("heart-full", 0xe63946, 0x4a0f18);
+    makeHeart("heart-empty", 0x3b2a2e, 0x1c1215);
+    this.hearts = Array.from({ length: MAX_LIVES }, () =>
+      this.add.image(0, 0, "heart-full").setOrigin(1, 0).setDepth(20)
+    );
+    this.updateHearts(false);
+  }
+
+  layoutHearts(width) {
+    this.hearts?.forEach((heart, index) =>
+      heart.setPosition(width - 20 - (MAX_LIVES - 1 - index) * 40, 16)
+    );
+  }
+
+  updateHearts(animateLoss = false) {
+    this.hearts?.forEach((heart, index) => {
+      const full = index < this.lives;
+      heart.setTexture(full ? "heart-full" : "heart-empty");
+      if (animateLoss && index === this.lives) {
+        this.tweens.add({
+          targets: heart,
+          scale: { from: 1.5, to: 1 },
+          duration: 250,
+          ease: "Back.Out",
+        });
+      }
+    });
+  }
+
+  loseLife() {
+    if (this.state !== "playing" || this.lives <= 0) return false;
+    this.lives = Math.max(0, this.lives - 1);
+    this.updateHearts(true);
+    return true;
   }
 
   update(time, delta) {
@@ -422,7 +494,12 @@ export default class SquareBlocksScene extends Phaser.Scene {
     }
 
     this.titleText.setFontSize(L.fonts.title).setPosition(L.title.x, L.title.y);
-    this.scoreText.setFontSize(L.fonts.title).setPosition(L.score.x, L.score.y);
+    // Les cœurs reprennent l'angle supérieur droit de Travel ; le score est
+    // légèrement abaissé dans l'en-tête pour ne pas les recouvrir.
+    this.layoutHearts(W);
+    this.scoreText
+      .setFontSize(L.fonts.label)
+      .setPosition(L.score.x, L.score.y + L.fonts.label * 1.45);
 
     this.nextLabel
       .setFontSize(L.fonts.label)
