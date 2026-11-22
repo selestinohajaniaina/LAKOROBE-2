@@ -7,6 +7,7 @@ import {
   imagePuzzleConfigs,
 } from "../systems/square-blocks/boardLogic.js";
 import { computeLayout } from "../systems/square-blocks/layout.js";
+import createKeyboardMenu from "../ui/createKeyboardMenu.js";
 
 const SCENE_KEY = "SquareBlocksScene";
 const HOME_SCENE = "Startup";
@@ -134,7 +135,6 @@ export default class SquareBlocksScene extends Phaser.Scene {
         this.textStyle({
           fontSize: "14px",
           align: "center",
-          color: "#ff9aa8",
         })
       )
       .setOrigin(0.5, 0)
@@ -145,6 +145,12 @@ export default class SquareBlocksScene extends Phaser.Scene {
     this.homeButton.set("EXIT TO HOME", () => this.goHome());
 
     this.setupInput();
+    this.keyboardMenu = createKeyboardMenu(this, {
+      getButtons: () => [this.primaryButton, this.homeButton],
+      setSelected: (button, selected) =>
+        this.setButtonState(button, selected ? "selected" : "normal"),
+      activate: (button) => button.activate(),
+    });
 
     this.scale.on("resize", this.onResize, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () =>
@@ -181,19 +187,34 @@ export default class SquareBlocksScene extends Phaser.Scene {
       background,
       label,
       action: null,
+      active: false,
+      visible: false,
       set(text, action) {
         label.setText(text);
         button.action = action;
       },
+      activate() {
+        button.action?.();
+      },
     };
-    background.on("pointerover", () => background.setFillStyle(BUTTON.hover));
-    background.on("pointerout", () => background.setFillStyle(BUTTON.normal));
-    background.on("pointerdown", () => background.setFillStyle(BUTTON.down));
+    background.on("pointerover", () => this.setButtonState(button, "hover"));
+    background.on("pointerout", () => this.setButtonState(button, "normal"));
+    background.on("pointerdown", () => this.setButtonState(button, "down"));
     background.on("pointerup", () => {
-      background.setFillStyle(BUTTON.hover);
-      button.action?.();
+      this.setButtonState(button, "hover");
+      button.activate();
     });
     return button;
+  }
+
+  setButtonState(button, state) {
+    const fill =
+      state === "selected" ? COLORS.border : BUTTON[state] ?? BUTTON.normal;
+    button.background.setFillStyle(fill);
+    button.background.setStrokeStyle(
+      3,
+      state === "selected" ? 0xfff0b5 : COLORS.border
+    );
   }
 
   // Les boutons n'existent qu'à la fin d'un niveau : NEXT LEVEL après une
@@ -214,7 +235,10 @@ export default class SquareBlocksScene extends Phaser.Scene {
 
     const showButtons = ready || ended;
 
-    [this.primaryButton, this.homeButton].forEach(({ background, label }) => {
+    [this.primaryButton, this.homeButton].forEach((button) => {
+      const { background, label } = button;
+      button.active = showButtons;
+      button.visible = showButtons;
       background.setVisible(showButtons).setFillStyle(BUTTON.normal);
       label.setVisible(showButtons);
 
@@ -230,6 +254,8 @@ export default class SquareBlocksScene extends Phaser.Scene {
     this.gameOverText
       .setText(`GAME OVER\nFINAL SCORE ${this.score}`)
       .setVisible(this.state === "gameOver");
+    if (showButtons) this.keyboardMenu?.select(this.primaryButton);
+    else this.keyboardMenu?.clear();
     this.dirty = true;
   }
 
@@ -578,9 +604,12 @@ export default class SquareBlocksScene extends Phaser.Scene {
     // Les cœurs reprennent l'angle supérieur droit de Travel ; le score est
     // légèrement abaissé dans l'en-tête pour ne pas les recouvrir.
     this.layoutHearts(W);
-    this.scoreText
-      .setFontSize(L.fonts.label)
-      .setPosition(L.score.x, L.score.y + L.fonts.label * 0.8);
+    // Le score occupe l'espace sous les cœurs, à droite de l'en-tête.
+    const scoreY = Math.min(
+      L.zone.y - L.pad,
+      20 + 34 + L.pad
+    );
+    this.scoreText.setFontSize(L.fonts.label).setPosition(L.score.x, scoreY);
 
     this.nextLabel
       .setFontSize(L.fonts.label)
