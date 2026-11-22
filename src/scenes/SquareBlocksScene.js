@@ -852,27 +852,38 @@ export default class SquareBlocksScene extends Phaser.Scene {
     return this.board.config?.digits ? tile : null;
   }
 
-  // Dessine un chiffre (police pixel 3x5) centré dans un bloc de côté s.
+  // Dessine un nombre (police pixel 3x5) centré dans un bloc de côté s.
   drawDigit(g, x, y, s, digit) {
-    const glyph = DIGITS[digit % 10];
-    if (!glyph) return;
-    const px = Math.max(1, Math.floor((s * 0.5) / 5));
-    const w = 3 * px;
+    const characters = String(digit).split("");
+    const glyphs = characters.map((character) => DIGITS[character]);
+    if (glyphs.some((glyph) => !glyph)) return;
+    const px = Math.max(
+      1,
+      Math.floor((s * 0.5) / Math.max(5, characters.length * 4))
+    );
+    const w = (characters.length * 4 - 1) * px;
     const h = 5 * px;
     const ox = Math.round(x + (s - w) / 2);
     const oy = Math.round(y + (s - h) / 2);
     g.fillStyle(DIGIT_COLOR, 1);
-    for (let r = 0; r < 5; r++) {
-      let c = 0;
-      while (c < 3) {
-        if (glyph[r][c] === "1") {
-          let end = c;
-          while (end + 1 < 3 && glyph[r][end + 1] === "1") end++;
-          g.fillRect(ox + c * px, oy + r * px, (end - c + 1) * px, px);
-          c = end + 1;
-        } else c++;
+    glyphs.forEach((glyph, index) => {
+      for (let r = 0; r < 5; r++) {
+        let c = 0;
+        while (c < 3) {
+          if (glyph[r][c] === "1") {
+            let end = c;
+            while (end + 1 < 3 && glyph[r][end + 1] === "1") end++;
+            g.fillRect(
+              ox + (index * 4 + c) * px,
+              oy + r * px,
+              (end - c + 1) * px,
+              px
+            );
+            c = end + 1;
+          } else c++;
+        }
       }
-    }
+    });
   }
 
   drawPanel(g, rect, alpha) {
