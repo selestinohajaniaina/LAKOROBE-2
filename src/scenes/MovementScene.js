@@ -3,6 +3,9 @@ import fontUrl from "../assets/fonts/SuperPixel.ttf";
 import personIdleUrl from "../assets/sprite/person-1/Idle.png";
 import personJumpUrl from "../assets/sprite/person-1/Jump.png";
 import personRunUrl from "../assets/sprite/person-1/Run.png";
+import fabienJumpUrl from "../assets/sprite/fabien/Jump.png";
+import fabienRunUrl from "../assets/sprite/fabien/Run.png";
+import fabienFullRunUrl from "../assets/sprite/fabien/Run.png";
 import clickUrl from "../assets/song/popup.mp3";
 import songUrl from "../assets/song/startup.mp3";
 import runSongUrl from "../assets/song/step-1.mp3";
@@ -12,7 +15,6 @@ import RunnerCourse from "./runner/RunnerCourse";
 import { configureButtonInput } from "../ui/configureButtonInput.js";
 import { THEMES, THEME_STEP } from "./runner/themes";
 import createKeyboardMenu from "../ui/createKeyboardMenu.js";
-import { CHARACTERS } from "./runner/characters";
 
 const BUTTON_HEIGHT = 50;
 const BUTTON_COUNT = 4;
@@ -47,6 +49,26 @@ const SHEETS = {
   jump: personJumpUrl,
 };
 
+// Deux personnages jouables seulement : le sprite historique et Fabien.
+const RUNNER_CHARACTERS = [
+  {
+    id: "person-1",
+    name: "ORIGINAL",
+    texture: "person-1-idle",
+    frame: 512,
+    scale: 0.18,
+    hitbox: { w: 210, h: 425, x: 151, y: 70 },
+  },
+  {
+    id: "fabien",
+    name: "FABIEN",
+    texture: "fabien-run",
+    frame: 512,
+    scale: 0.18,
+    hitbox: { w: 170, h: 425, x: 92, y: 70 },
+  },
+];
+
 const MAX_LIVES = 3;
 const INVINCIBLE_MS = 1600; // durée d'invulnérabilité après un coup
 
@@ -65,6 +87,14 @@ export default class MovementScene extends Phaser.Scene {
         frameWidth: FRAME_SIZE,
         frameHeight: FRAME_SIZE,
       });
+    });
+    this.load.spritesheet("fabien-run", fabienRunUrl, {
+      frameWidth: 380,
+      frameHeight: 512,
+    });
+    this.load.spritesheet("fabien-jump", fabienJumpUrl, {
+      frameWidth: 347,
+      frameHeight: 512,
     });
     this.load.audio("click-move", clickUrl);
     this.load.audio("song-move", songUrl);
@@ -170,6 +200,10 @@ export default class MovementScene extends Phaser.Scene {
       ["person-1-run", "person-1-run", 0, 3, 11, -1],
       ["person-1-jump", "person-1-jump", 0, 5, 12, 0],
       ["person-1-fall", "person-1-jump", 6, 10, 12, 0],
+      ["fabien-idle", "fabien-run", 0, 0, 1, -1],
+      ["fabien-run", "fabien-run", 0, 4, 15, -1],
+      ["fabien-jump", "fabien-jump", 0, 4, 12, 0],
+      ["fabien-fall", "fabien-jump", 4, 4, 1, -1],
     ];
     animations.forEach(([key, texture, start, end, frameRate, repeat]) => {
       if (this.anims.exists(key)) return;
@@ -182,13 +216,14 @@ export default class MovementScene extends Phaser.Scene {
     });
   }
 
+
   createPlayer() {
-    // Le runner conserve uniquement le sprite original du projet.
-    this.character = CHARACTERS[0];
+    this.characterIndex = 0;
+    this.character = RUNNER_CHARACTERS[this.characterIndex];
     this.player = this.physics.add.sprite(0, 0, this.character.texture, 0);
     this.player.setDepth(6).setCollideWorldBounds(true);
     this.currentPlayerAnimation = null;
-    this.applyCharacter();
+    this.applyCharacter(this.characterIndex);
   }
 
   createControls() {
@@ -197,6 +232,8 @@ export default class MovementScene extends Phaser.Scene {
       jump: Phaser.Input.Keyboard.KeyCodes.SPACE,
       restart: Phaser.Input.Keyboard.KeyCodes.R,
       back: Phaser.Input.Keyboard.KeyCodes.ESC,
+      charPrev: Phaser.Input.Keyboard.KeyCodes.A,
+      charNext: Phaser.Input.Keyboard.KeyCodes.D,
     });
   }
 
@@ -243,6 +280,7 @@ export default class MovementScene extends Phaser.Scene {
     });
 
     this.createHearts();
+    this.createCharacterPicker();
   }
 
   layout({ width, height }) {
@@ -267,6 +305,7 @@ export default class MovementScene extends Phaser.Scene {
     this.themeText.setFontSize(`${themeSize}px`).setPosition(width / 2, 24);
 
     this.layoutHearts(width);
+    this.layoutPicker(width, height);
 
     this.layoutButtons({ width, height });
     this.layoutTexts({ width, height });
@@ -395,6 +434,13 @@ export default class MovementScene extends Phaser.Scene {
       Phaser.Input.Keyboard.JustDown(this.keys.jump) ||
       Phaser.Input.Keyboard.JustDown(this.cursors.up);
     if (actionPressed) this.handleAction();
+
+    if (this.state !== STATE.RUNNING) {
+      if (Phaser.Input.Keyboard.JustDown(this.keys.charPrev))
+        this.changeCharacter(-1);
+      if (Phaser.Input.Keyboard.JustDown(this.keys.charNext))
+        this.changeCharacter(1);
+    }
 
     this.player.setX(this.playerX).setVelocityX(0);
     if (this.state !== STATE.RUNNING) return;
@@ -582,6 +628,7 @@ export default class MovementScene extends Phaser.Scene {
       if (b.label.text == "Play" || b.label.text == "Replay")
         b.label.setText(textToPlay);
     });
+    this.pickerItems?.forEach((item) => item.setVisible(type));
   }
 
   layoutButtons({ width, height }) {
@@ -731,16 +778,68 @@ export default class MovementScene extends Phaser.Scene {
     return `${this.character.id}-${name}`;
   }
 
-  applyCharacter() {
+  applyCharacter(index) {
+    const count = RUNNER_CHARACTERS.length;
+    this.characterIndex = (index + count) % count;
+    this.character = RUNNER_CHARACTERS[this.characterIndex];
     const { texture, scale, hitbox } = this.character;
 
     this.currentPlayerAnimation = null;
     this.player.setTexture(texture, 0).setScale(scale);
     this.player.body.setSize(hitbox.w, hitbox.h).setOffset(hitbox.x, hitbox.y);
+    this.pickerName?.setText(this.character.name);
     if (this.groundY !== undefined) this.placePlayerOnGround();
     this.playPlayerAnimation(
       this.animKey(this.state === STATE.RUNNING ? "run" : "idle")
     );
+  }
+
+  changeCharacter(step) {
+    if (this.state === STATE.RUNNING) return;
+    this.clickSong?.play();
+    this.applyCharacter(this.characterIndex + step);
+  }
+
+  createCharacterPicker() {
+    const style = {
+      fontFamily: "SuperPixel, monospace",
+      color: "#fff4c2",
+      stroke: "#2c2418",
+      strokeThickness: 5,
+    };
+    this.pickerName = this.add
+      .text(0, 0, this.character.name, { ...style, fontSize: "22px" })
+      .setOrigin(0.5)
+      .setDepth(20);
+    const arrow = (label, step) => {
+      const text = this.add
+        .text(0, 0, label, {
+          ...style,
+          fontSize: "36px",
+          padding: { x: 18, y: 8 },
+        })
+        .setOrigin(0.5)
+        .setDepth(20)
+        .setInteractive({ useHandCursor: true });
+      text.on("pointerover", () => text.setColor("#ffd872"));
+      text.on("pointerout", () => text.setColor("#fff4c2"));
+      text.on("pointerup", () => this.changeCharacter(step));
+      return text;
+    };
+    this.pickerPrev = arrow("<", -1);
+    this.pickerNext = arrow(">", 1);
+    this.pickerItems = [this.pickerName, this.pickerPrev, this.pickerNext];
+  }
+
+  layoutPicker(width, height) {
+    if (!this.pickerName) return;
+    const y = height / 2 + 34;
+    const gap = Math.min(150, width / 2 - 50);
+    this.pickerName
+      .setPosition(width / 2, y)
+      .setFontSize(`${Phaser.Math.Clamp(width / 30, 14, 24)}px`);
+    this.pickerPrev.setPosition(width / 2 - gap, y);
+    this.pickerNext.setPosition(width / 2 + gap, y);
   }
 
 }
