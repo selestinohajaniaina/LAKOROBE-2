@@ -1,10 +1,5 @@
 import Phaser from "phaser";
 import fontUrl from "../assets/fonts/SuperPixel.ttf";
-import personIdleUrl from "../assets/sprite/person-1/Idle.png";
-import personJumpUrl from "../assets/sprite/person-1/Jump.png";
-import personRunUrl from "../assets/sprite/person-1/Run.png";
-import fabienJumpUrl from "../assets/sprite/fabien/Jump.png";
-import fabienRunUrl from "../assets/sprite/fabien/Run.png";
 import clickUrl from "../assets/song/popup.mp3";
 import songUrl from "../assets/song/startup.mp3";
 import runSongUrl from "../assets/song/step-1.mp3";
@@ -14,6 +9,11 @@ import RunnerCourse from "./runner/RunnerCourse";
 import { configureButtonInput } from "../ui/configureButtonInput.js";
 import { THEMES, THEME_STEP } from "./runner/themes";
 import createKeyboardMenu from "../ui/createKeyboardMenu.js";
+import {
+  PLAYER_SPRITES,
+  createPlayerSpriteAnimations,
+  loadPlayerSprites,
+} from "./runner/playerSprites.js";
 
 const BUTTON_HEIGHT = 50;
 const BUTTON_COUNT = 4;
@@ -32,8 +32,6 @@ const COLORS = {
   border: 0xf2bd55,
 };
 
-const FRAME_SIZE = 512;
-const PLAYER_SCALE = 0.18;
 const JUMP_SPEED = 610;
 // const BASE_SPEED = 310;
 const BASE_SPEED = 150;
@@ -42,32 +40,6 @@ const PLAYER_X_RATIO = 0.23;
 const GRASS_SCALE = 0.625;
 const GRASS_HEIGHT = 50;
 const STATE = { READY: "ready", RUNNING: "running", OVER: "game-over" };
-const SHEETS = {
-  idle: personIdleUrl,
-  run: personRunUrl,
-  jump: personJumpUrl,
-};
-
-// Deux personnages jouables seulement : le sprite historique et Fabien.
-const RUNNER_CHARACTERS = [
-  {
-    id: "person-1",
-    name: "ORIGINAL",
-    texture: "person-1-idle",
-    frame: 512,
-    scale: 0.18,
-    hitbox: { w: 210, h: 425, x: 151, y: 70 },
-  },
-  {
-    id: "fabien",
-    name: "FABIEN",
-    texture: "fabien-run",
-    frame: 512,
-    scale: 0.18,
-    hitbox: { w: 210, h: 425, x: 151, y: 70 },
-  },
-];
-
 const MAX_LIVES = 3;
 const INVINCIBLE_MS = 1600; // durée d'invulnérabilité après un coup
 
@@ -81,20 +53,7 @@ export default class MovementScene extends Phaser.Scene {
     if (!isSuperPixelLoaded()) {
       this.load.font(SUPER_PIXEL_FAMILY, fontUrl, "truetype");
     }
-    Object.entries(SHEETS).forEach(([name, url]) => {
-      this.load.spritesheet(`person-1-${name}`, url, {
-        frameWidth: FRAME_SIZE,
-        frameHeight: FRAME_SIZE,
-      });
-    });
-    this.load.spritesheet("fabien-run", fabienRunUrl, {
-      frameWidth: 512,
-      frameHeight: 512,
-    });
-    this.load.spritesheet("fabien-jump", fabienJumpUrl, {
-      frameWidth: 512,
-      frameHeight: 512,
-    });
+    loadPlayerSprites(this);
     this.load.audio("click-move", clickUrl);
     this.load.audio("song-move", songUrl);
     this.load.audio("run-song-move", runSongUrl);
@@ -105,7 +64,7 @@ export default class MovementScene extends Phaser.Scene {
     this.rng = new Phaser.Math.RandomDataGenerator();
     this.createRunnerTextures();
     this.createEnvironment();
-    this.createPlayerAnimations();
+    createPlayerSpriteAnimations(this);
     this.createPlayer();
     this.course = new RunnerCourse(this);
     this.createSounds();
@@ -193,32 +152,9 @@ export default class MovementScene extends Phaser.Scene {
     this.physics.add.existing(this.ground, true);
   }
 
-  createPlayerAnimations() {
-    const animations = [
-      ["person-1-idle", "person-1-idle", 0, 1, 2, -1],
-      ["person-1-run", "person-1-run", 0, 3, 11, -1],
-      ["person-1-jump", "person-1-jump", 0, 5, 12, 0],
-      ["person-1-fall", "person-1-jump", 6, 10, 12, 0],
-      ["fabien-idle", "fabien-jump", 3, 3, 1, 0],
-      ["fabien-run", "fabien-run", 0, 7, 11, -1],
-      ["fabien-jump", "fabien-jump", 0, 3, 12, 0],
-      // Jump.png comporte 4 frames (0 à 3) ; la dernière sert à la chute.
-      ["fabien-fall", "fabien-jump", 3, 3, 1, -1],
-    ];
-    animations.forEach(([key, texture, start, end, frameRate, repeat]) => {
-      if (this.anims.exists(key)) return;
-      this.anims.create({
-        key,
-        frames: this.anims.generateFrameNumbers(texture, { start, end }),
-        frameRate,
-        repeat,
-      });
-    });
-  }
-
   createPlayer() {
     this.characterIndex = 0;
-    this.character = RUNNER_CHARACTERS[this.characterIndex];
+    this.character = PLAYER_SPRITES[this.characterIndex];
     this.player = this.physics.add.sprite(0, 0, this.character.texture, 0);
     this.player.setDepth(6).setCollideWorldBounds(true);
     this.currentPlayerAnimation = null;
@@ -778,9 +714,9 @@ export default class MovementScene extends Phaser.Scene {
   }
 
   applyCharacter(index) {
-    const count = RUNNER_CHARACTERS.length;
+    const count = PLAYER_SPRITES.length;
     this.characterIndex = (index + count) % count;
-    this.character = RUNNER_CHARACTERS[this.characterIndex];
+    this.character = PLAYER_SPRITES[this.characterIndex];
     const { texture, scale, hitbox } = this.character;
 
     this.currentPlayerAnimation = null;
