@@ -5,7 +5,6 @@ import personJumpUrl from "../assets/sprite/person-1/Jump.png";
 import personRunUrl from "../assets/sprite/person-1/Run.png";
 import fabienJumpUrl from "../assets/sprite/fabien/Jump.png";
 import fabienRunUrl from "../assets/sprite/fabien/Run.png";
-import fabienFullRunUrl from "../assets/sprite/fabien/Run.png";
 import clickUrl from "../assets/song/popup.mp3";
 import songUrl from "../assets/song/startup.mp3";
 import runSongUrl from "../assets/song/step-1.mp3";
@@ -65,7 +64,7 @@ const RUNNER_CHARACTERS = [
     texture: "fabien-run",
     frame: 512,
     scale: 0.18,
-    hitbox: { w: 170, h: 425, x: 92, y: 70 },
+    hitbox: { w: 210, h: 425, x: 151, y: 70 },
   },
 ];
 
@@ -89,11 +88,11 @@ export default class MovementScene extends Phaser.Scene {
       });
     });
     this.load.spritesheet("fabien-run", fabienRunUrl, {
-      frameWidth: 380,
+      frameWidth: 512,
       frameHeight: 512,
     });
     this.load.spritesheet("fabien-jump", fabienJumpUrl, {
-      frameWidth: 347,
+      frameWidth: 512,
       frameHeight: 512,
     });
     this.load.audio("click-move", clickUrl);
@@ -200,9 +199,9 @@ export default class MovementScene extends Phaser.Scene {
       ["person-1-run", "person-1-run", 0, 3, 11, -1],
       ["person-1-jump", "person-1-jump", 0, 5, 12, 0],
       ["person-1-fall", "person-1-jump", 6, 10, 12, 0],
-      ["fabien-idle", "fabien-run", 0, 0, 1, -1],
-      ["fabien-run", "fabien-run", 0, 4, 15, -1],
-      ["fabien-jump", "fabien-jump", 0, 4, 12, 0],
+      ["fabien-idle", "fabien-jump", 3, 3, 1, 0],
+      ["fabien-run", "fabien-run", 0, 7, 11, -1],
+      ["fabien-jump", "fabien-jump", 0, 3, 12, 0],
       ["fabien-fall", "fabien-jump", 4, 4, 1, -1],
     ];
     animations.forEach(([key, texture, start, end, frameRate, repeat]) => {
@@ -215,7 +214,6 @@ export default class MovementScene extends Phaser.Scene {
       });
     });
   }
-
 
   createPlayer() {
     this.characterIndex = 0;
@@ -841,5 +839,4 @@ export default class MovementScene extends Phaser.Scene {
     this.pickerPrev.setPosition(width / 2 - gap, y);
     this.pickerNext.setPosition(width / 2 + gap, y);
   }
-
 }
