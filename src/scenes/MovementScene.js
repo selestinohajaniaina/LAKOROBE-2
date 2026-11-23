@@ -202,7 +202,8 @@ export default class MovementScene extends Phaser.Scene {
       ["fabien-idle", "fabien-jump", 3, 3, 1, 0],
       ["fabien-run", "fabien-run", 0, 7, 11, -1],
       ["fabien-jump", "fabien-jump", 0, 3, 12, 0],
-      ["fabien-fall", "fabien-jump", 4, 4, 1, -1],
+      // Jump.png comporte 4 frames (0 à 3) ; la dernière sert à la chute.
+      ["fabien-fall", "fabien-jump", 3, 3, 1, -1],
     ];
     animations.forEach(([key, texture, start, end, frameRate, repeat]) => {
       if (this.anims.exists(key)) return;
