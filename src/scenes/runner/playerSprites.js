@@ -6,6 +6,10 @@ import fabienRunUrl from "../../assets/sprite/fabien/Run.png";
 import rochelJumpUrl from "../../assets/sprite/rochel/Jump.png";
 import rochelRunUrl from "../../assets/sprite/rochel/Run.png";
 import rochelIdleUrl from "../../assets/sprite/rochel/Idle.png";
+import selestinoRunUrl from "../../assets/sprite/selestino/Run.png";
+import selestinoJumpUrl from "../../assets/sprite/selestino/Jump.png";
+import mandresyRunUrl from "../../assets/sprite/mandresy/Run.png";
+import mandresyJumpUrl from "../../assets/sprite/mandresy/Jump.png";
 
 // Point unique de configuration des personnages de Travel. Pour en ajouter
 // un autre, déclarer ses feuilles et ses quatre animations dans ce tableau.
@@ -62,6 +66,42 @@ export const PLAYER_SPRITES = [
     animations: {
       idle: ["run", 3, 4, 2, -1],
       run: ["run", 0, 7, 11, -1],
+      jump: ["jump", 0, 3, 12, 0],
+      fall: ["jump", 3, 3, 1, -1],
+    },
+  },
+  {
+    id: "selestino",
+    name: "SELESTINO",
+    texture: "selestino-run",
+    frame: 512,
+    scale: 0.18,
+    hitbox: { w: 210, h: 420, x: 146, y: 68 },
+    sheets: {
+      run: { url: selestinoRunUrl, width: 512, height: 512 },
+      jump: { url: selestinoJumpUrl, width: 512, height: 512 },
+    },
+    animations: {
+      idle: ["run", 2, 3, 2, -1],
+      run: ["run", 0, 7, 9, -1],
+      jump: ["jump", 0, 3, 12, 0],
+      fall: ["jump", 3, 3, 1, -1],
+    },
+  },
+  {
+    id: "mandresy",
+    name: "MANDRESY",
+    texture: "mandresy-run",
+    frame: 512,
+    scale: 0.18,
+    hitbox: { w: 210, h: 420, x: 146, y: 68 },
+    sheets: {
+      run: { url: mandresyRunUrl, width: 512, height: 512 },
+      jump: { url: mandresyJumpUrl, width: 512, height: 512 },
+    },
+    animations: {
+      idle: ["run", 2, 3, 2, -1],
+      run: ["run", 0, 7, 9, -1],
       jump: ["jump", 0, 3, 12, 0],
       fall: ["jump", 3, 3, 1, -1],
     },
