@@ -296,7 +296,10 @@ export default class Startup extends Phaser.Scene {
           button.message
         )
       )
-        this.scene.start(button.message);
+        this.scene.start(
+          button.message === "Movement" ? "Loading" : button.message,
+          button.message === "Movement" ? { target: "Movement" } : undefined
+        );
     };
     button.on("pointerup", () => {
       this.setButtonState(button, "hover");
